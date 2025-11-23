@@ -14,6 +14,20 @@
                         <h1 class="text-4xl font-black text-white mb-1 flex items-center justify-center gap-2">
                             🍌 Nano<br />
                             <span class="text-yellow-100 text-5xl">Banana</span>
+                        </h1>
+                        <p class="text-white text-base font-medium">上传你的图片，我来创造艺术！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API设置区域 -->
+            <div class="mb-6">
+                <div class="flex justify-center">
+                    <button
+                        @click="showApiSettings = !showApiSettings"
+                        :class="[
+                            'px-6 py-3 rounded-lg border-4 border-black font-bold text-sm transition-all flex items-center gap-2 shadow-lg',
+                            apiKey ? 'bg-green-400 text-white hover:bg-green-500' : 'bg-red-400 text-white hover:bg-red-500 animate-pulse'
                         ]"
                     >
                         <span>🔑</span>
