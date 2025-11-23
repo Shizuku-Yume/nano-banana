@@ -53,7 +53,7 @@
         <div class="mt-4">
             <div class="flex items-center justify-between mb-2">
                 <label class="text-sm font-bold text-gray-700">📚 预设风格库</label>
-                <span class="text-xs text-gray-500">点击应用，再次点击取消</span>
+                <span class="text-xs text-gray-500">点击应用</span>
             </div>
             
             <div class="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-1">

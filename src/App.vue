@@ -183,6 +183,13 @@
 
             <!-- Footer -->
             <Footer />
+
+            <PromptWarehouse 
+                v-if="showWarehouse"
+                @close="showWarehouse = false"
+                @use-prompt="handleUseWarehousePrompt"
+                @save-prompt="handleSaveTemplate"
+            />
         </div>
     </div>
 </template>
