@@ -121,31 +121,6 @@
                         <div class="flex-1">
                             <StylePromptSelector 
                                 v-model:selectedStyle="selectedStyle" 
-                                v-model:customPrompt="customPrompt" 
-                                :templates="styleTemplates"
-                                :user-templates="userTemplates"
-                                @save-template="handleSaveTemplate"
-                                @delete-template="handleDeleteTemplate"
-                                @import-templates="handleImportTemplates"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 生成按钮 -->
-            <div class="mb-6">
-                <div class="flex flex-col gap-4 lg:flex-row lg:gap-6">
-                    <button
-                        @click="handleTextToImageGenerate"
-                        :disabled="!canGenerateTextImage"
-                        :class="[
-                            'flex-1 px-6 py-4 rounded-lg font-bold text-white text-lg transition-all duration-200 flex items-center justify-center gap-3 border-4 border-black shadow-lg',
-                            canGenerateTextImage
-                                ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 hover:-translate-y-1 hover:shadow-xl'
-                                : 'bg-gray-400 cursor-not-allowed'
-                        ]"
-                    >
                         <span v-if="!isTextToImageLoading" class="flex items-center gap-2 text-xl">🍌 施展魔法（文生图）</span>
                         <span v-else class="flex items-center gap-2 text-xl">🍌 正在施法...</span>
                         <div v-if="isTextToImageLoading" class="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin" />
@@ -195,6 +170,7 @@ import ResultDisplay from './components/ResultDisplay.vue'
 import Footer from './components/Footer.vue'
 import AspectRatioSelector from './components/AspectRatioSelector.vue'
 import Gemini3ProConfig from './components/Gemini3ProConfig.vue'
+import PromptWarehouse from './components/PromptWarehouse.vue'
 import { fetchModels, generateImage } from './services/api'
 import { styleTemplates } from './data/templates'
 import { LocalStorage } from './utils/storage'
@@ -235,6 +211,7 @@ const userTemplates = ref<StyleTemplate[]>([])
 const selectedStyle = ref('')
 const customPrompt = ref('')
 const textToImagePrompt = ref('')
+const showWarehouse = ref(false)
 
 // --- State: Generation ---
 const selectedImages = ref<string[]>([])
@@ -382,6 +359,12 @@ const handleImportTemplates = (templates: StyleTemplate[]) => {
     } else {
         alert('没有新的预设被导入（可能全部重复）。')
     }
+}
+
+const handleUseWarehousePrompt = (prompt: string) => {
+    customPrompt.value = prompt
+    // Clear selected style if it was set, as we are now using a custom prompt
+    selectedStyle.value = ''
 }
 
 // --- Methods: Models ---

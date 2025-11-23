@@ -7,6 +7,13 @@
             </div>
             <div class="flex gap-2">
                 <button
+                    @click="$emit('open-warehouse')"
+                    class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded border border-purple-300 transition-colors flex items-center gap-1 font-bold"
+                    title="打开提示词仓库"
+                >
+                    🏪 仓库
+                </button>
+                <button
                     @click="copyAllPresets"
                     class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded border border-gray-300 transition-colors flex items-center gap-1"
                     title="复制所有预设到剪贴板"
@@ -50,44 +57,12 @@
             </div>
             
             <div class="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-1">
-                <!-- 用户自定义预设 -->
-                <div v-if="userTemplates.length > 0" class="space-y-2">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">自定义</div>
+                <div
+                    v-for="template in allTemplates"
+                    :key="template.id"
+                    class="group relative"
+                >
                     <div
-                        v-for="template in userTemplates"
-                        :key="template.id"
-                        class="group relative"
-                    >
-                        <div
-                            @click="toggleStyle(template)"
-                            :class="[
-                                'p-3 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3',
-                                selectedStyle === template.id 
-                                    ? 'bg-yellow-100 border-orange-500' 
-                                    : 'bg-white border-gray-200 hover:border-orange-300'
-                            ]"
-                        >
-                            <div class="flex-1 min-w-0">
-                                <div class="text-sm font-bold truncate">{{ template.title }}</div>
-                                <div class="text-xs text-gray-500 truncate">{{ template.description }}</div>
-                            </div>
-                            <button
-                                @click.stop="deletePreset(template.id)"
-                                class="opacity-0 group-hover:opacity-100 p-1.5 text-red-500 hover:bg-red-50 rounded transition-all"
-                                title="删除预设"
-                            >
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 系统预设 -->
-                <div class="space-y-2 mt-2">
-                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">系统预设</div>
-                    <div
-                        v-for="template in templates"
-                        :key="template.id"
                         @click="toggleStyle(template)"
                         :class="[
                             'p-3 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3',
@@ -96,15 +71,18 @@
                                 : 'bg-white border-gray-200 hover:border-orange-300'
                         ]"
                     >
-                        <img 
-                            v-if="template.image" 
-                            :src="template.image" 
-                            class="w-10 h-10 rounded object-cover border border-gray-200 bg-gray-50"
-                        />
                         <div class="flex-1 min-w-0">
                             <div class="text-sm font-bold truncate">{{ template.title }}</div>
                             <div class="text-xs text-gray-500 truncate">{{ template.description }}</div>
                         </div>
+                        <button
+                            v-if="isUserTemplate(template.id)"
+                            @click.stop="deletePreset(template.id)"
+                            class="opacity-0 group-hover:opacity-100 p-1.5 text-red-500 hover:bg-red-50 rounded transition-all"
+                            title="删除预设"
+                        >
+                            🗑️
+                        </button>
                     </div>
                 </div>
             </div>
@@ -113,6 +91,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { StyleTemplate } from '../types'
 
 const props = defineProps<{
@@ -128,12 +107,19 @@ const emit = defineEmits<{
     'save-template': [template: StyleTemplate]
     'delete-template': [id: string]
     'import-templates': [templates: StyleTemplate[]]
+    'open-warehouse': []
 }>()
+
+const allTemplates = computed(() => [...props.userTemplates, ...props.templates])
+
+const isUserTemplate = (id: string) => {
+    return props.userTemplates.some(t => t.id === id)
+}
 
 const updateCustomPrompt = (value: string) => {
     // 如果用户修改了内容，且内容与当前选中的预设不一致，则取消选中预设
     if (props.selectedStyle) {
-        const currentTemplate = [...props.templates, ...props.userTemplates].find(t => t.id === props.selectedStyle)
+        const currentTemplate = allTemplates.value.find(t => t.id === props.selectedStyle)
         if (currentTemplate && currentTemplate.prompt !== value) {
             emit('update:selectedStyle', '')
         }
@@ -161,7 +147,7 @@ const saveAsPreset = () => {
         title,
         prompt: props.customPrompt,
         description: '用户自定义风格',
-        image: '' // 自定义预设暂不支持图片
+        image: '' 
     }
 
     emit('save-template', newTemplate)
@@ -174,9 +160,10 @@ const deletePreset = (id: string) => {
 }
 
 const copyAllPresets = async () => {
-    const allPresets = [...props.userTemplates, ...props.templates]
+    // 导出时移除 image 字段
+    const exportData = allTemplates.value.map(({ image, ...rest }) => rest)
     try {
-        await navigator.clipboard.writeText(JSON.stringify(allPresets, null, 2))
+        await navigator.clipboard.writeText(JSON.stringify(exportData, null, 2))
         alert('✅ 已将所有预设复制到剪贴板！')
     } catch (err) {
         console.error('复制失败:', err)
