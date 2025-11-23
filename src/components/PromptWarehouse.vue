@@ -40,14 +40,14 @@
                 <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     <div 
                         v-for="item in prompts" 
-                        :key="item.zh"
+                        :key="item.title"
                         class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all group flex flex-col"
                     >
                         <!-- Image Preview -->
                         <div class="aspect-square bg-gray-100 relative overflow-hidden">
                             <img 
-                                :src="item.image" 
-                                :alt="item.zh"
+                                :src="item.preview" 
+                                :alt="item.title"
                                 loading="lazy"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
@@ -65,7 +65,7 @@
                         <!-- Info -->
                         <div class="p-3 flex flex-col gap-2 flex-1">
                             <div class="flex justify-between items-start gap-2">
-                                <h3 class="font-bold text-gray-800 line-clamp-1" :title="item.zh">{{ item.zh }}</h3>
+                                <h3 class="font-bold text-gray-800 line-clamp-1" :title="item.title">{{ item.title }}</h3>
                                 <button 
                                     @click="savePrompt(item)"
                                     class="text-gray-400 hover:text-yellow-500 transition-colors"
@@ -74,14 +74,14 @@
                                     ⭐
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-500 line-clamp-2" :title="item.en">
-                                {{ item.en }}
+                            <p class="text-xs text-gray-500 line-clamp-2" :title="item.prompt">
+                                {{ item.prompt }}
                             </p>
                             
                             <!-- Tags if any (mockup) -->
                             <div class="mt-auto pt-2 flex gap-1 flex-wrap">
                                 <span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
-                                    {{ item.en.length }} chars
+                                    {{ item.category || 'General' }}
                                 </span>
                             </div>
                         </div>
@@ -98,9 +98,10 @@ import type { StyleTemplate } from '../types'
 
 // Define the shape of the data from the JSON source
 interface WarehouseItem {
-    zh: string
-    en: string
-    image: string
+    title: string
+    prompt: string
+    preview: string
+    category?: string
 }
 
 const emit = defineEmits<{
@@ -129,20 +130,20 @@ const fetchPrompts = async () => {
 }
 
 const usePrompt = (item: WarehouseItem) => {
-    emit('use-prompt', item.en)
+    emit('use-prompt', item.prompt)
     emit('close')
 }
 
 const savePrompt = (item: WarehouseItem) => {
     const template: StyleTemplate = {
         id: `warehouse-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: item.zh,
-        prompt: item.en,
-        description: '来自提示词仓库',
+        title: item.title,
+        prompt: item.prompt,
+        description: item.category || '来自提示词仓库',
         image: '' // Don't save the image locally as per requirement
     }
     emit('save-prompt', template)
-    alert(`已收藏 "${item.zh}" 到预设库！`)
+    alert(`已收藏 "${item.title}" 到预设库！`)
 }
 
 onMounted(() => {

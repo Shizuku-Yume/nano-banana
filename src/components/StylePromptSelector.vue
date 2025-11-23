@@ -7,7 +7,7 @@
             </div>
             <div class="flex gap-2">
                 <button
-                    @click="$emit('open-warehouse')"
+                    @click.stop="$emit('open-warehouse')"
                     class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 px-2 py-1 rounded border border-purple-300 transition-colors flex items-center gap-1 font-bold"
                     title="打开提示词仓库"
                 >
