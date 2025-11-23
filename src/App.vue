@@ -146,6 +146,7 @@
                                 ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 hover:-translate-y-1 hover:shadow-xl'
                                 : 'bg-gray-400 cursor-not-allowed'
                         ]"
+                    >
                         <span v-if="!isTextToImageLoading" class="flex items-center gap-2 text-xl">🍌 施展魔法（文生图）</span>
                         <span v-else class="flex items-center gap-2 text-xl">🍌 正在施法...</span>
                         <div v-if="isTextToImageLoading" class="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin" />
