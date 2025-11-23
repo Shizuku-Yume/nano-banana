@@ -48,8 +48,14 @@
                         :models="modelOptions"
                         :model-loading="isFetchingModels"
                         :model-error="modelsError"
+                        :providers="apiConfigs"
+                        :active-provider-id="activeProviderId"
                         @fetch-models="handleFetchModels"
                         @model-picked="handleModelPicked"
+                        @add-provider="handleAddProvider"
+                        @delete-provider="handleDeleteProvider"
+                        @switch-provider="handleSwitchProvider"
+                        @update-provider-name="handleUpdateProviderName"
                     />
                 </div>
             </div>
@@ -113,7 +119,15 @@
                             🎨 图文生图 · 选择风格或自定义提示词
                         </div>
                         <div class="flex-1">
-                            <StylePromptSelector v-model:selectedStyle="selectedStyle" v-model:customPrompt="customPrompt" :templates="styleTemplates" />
+                            <StylePromptSelector 
+                                v-model:selectedStyle="selectedStyle" 
+                                v-model:customPrompt="customPrompt" 
+                                :templates="styleTemplates"
+                                :user-templates="userTemplates"
+                                @save-template="handleSaveTemplate"
+                                @delete-template="handleDeleteTemplate"
+                                @import-templates="handleImportTemplates"
+                            />
                         </div>
                     </div>
                 </div>
@@ -184,159 +198,193 @@ import Gemini3ProConfig from './components/Gemini3ProConfig.vue'
 import { fetchModels, generateImage } from './services/api'
 import { styleTemplates } from './data/templates'
 import { LocalStorage } from './utils/storage'
-import type { ApiModel, GenerateRequest, ModelOption } from './types'
+import type { ApiModel, GenerateRequest, ModelOption, StyleTemplate, ApiProviderConfig } from './types'
 import { DEFAULT_API_ENDPOINT, DEFAULT_MODEL_ID } from './config/api'
 
-const apiKey = ref('')
-const apiEndpoint = ref('')  // 改为空字符串，避免初始化时触发 watch
-const selectedImages = ref<string[]>([])
+// --- State: API Config ---
+const apiConfigs = ref<ApiProviderConfig[]>([])
+const activeProviderId = ref('')
+const showApiSettings = ref(false)
+const isFetchingModels = ref(false)
+const modelsError = ref<string | null>(null)
+const modelOptions = ref<ModelOption[]>([])
+
+// Computed properties for active provider
+const activeProvider = computed(() => 
+    apiConfigs.value.find(p => p.id === activeProviderId.value) || 
+    { apiKey: '', endpoint: '', model: '', id: '', name: '' }
+)
+
+const apiKey = computed({
+    get: () => activeProvider.value.apiKey,
+    set: (val) => updateActiveProvider({ apiKey: val })
+})
+
+const apiEndpoint = computed({
+    get: () => activeProvider.value.endpoint,
+    set: (val) => updateActiveProvider({ endpoint: val })
+})
+
+const selectedModel = computed({
+    get: () => activeProvider.value.model,
+    set: (val) => updateActiveProvider({ model: val })
+})
+
+// --- State: Prompts & Styles ---
+const userTemplates = ref<StyleTemplate[]>([])
 const selectedStyle = ref('')
 const customPrompt = ref('')
+const textToImagePrompt = ref('')
+
+// --- State: Generation ---
+const selectedImages = ref<string[]>([])
 const isLoading = ref(false)
 const result = ref<string | null>(null)
 const error = ref<string | null>(null)
-const textToImagePrompt = ref('')
 const textToImageResult = ref<string | null>(null)
 const textToImageError = ref<string | null>(null)
 const isTextToImageLoading = ref(false)
 const latestResultSource = ref<'text' | 'image' | null>(null)
-const showApiSettings = ref(false)
-const modelOptions = ref<ModelOption[]>([])
-const selectedModel = ref('')  // 改为空字符串，避免初始化时使用默认值
-const isFetchingModels = ref(false)
-const modelsError = ref<string | null>(null)
-const selectedAspectRatio = ref('1:1')  // 默认宽高比为 1:1
-let hasSyncedInitialEndpoint = false
 
-// Gemini 3 Pro Image 配置状态
-const gemini3ImageSize = ref('2K')  // 默认图像尺寸
-const gemini3EnableGoogleSearch = ref(false)  // 默认不启用谷歌搜索
+// --- State: Model Specific ---
+const selectedAspectRatio = ref('1:1')
+const gemini3ImageSize = ref('2K')
+const gemini3EnableGoogleSearch = ref(false)
 
-// 组件挂载时从本地存储读取API密钥
+// --- Lifecycle & Initialization ---
 onMounted(() => {
-    const savedApiKey = LocalStorage.getApiKey()
-    const savedEndpoint = LocalStorage.getApiEndpoint()
-    const savedModelId = LocalStorage.getModelId()
+    // 1. Load Custom Prompts
+    userTemplates.value = LocalStorage.getCustomPrompts()
 
-    if (savedApiKey) {
-        apiKey.value = savedApiKey
-        showApiSettings.value = false
+    // 2. Load API Configs
+    const savedConfigs = LocalStorage.getApiConfigs()
+    const savedActiveId = LocalStorage.getActiveProviderId()
+
+    if (savedConfigs.length > 0) {
+        apiConfigs.value = savedConfigs
+        if (savedActiveId && savedConfigs.some(c => c.id === savedActiveId)) {
+            activeProviderId.value = savedActiveId
+        } else {
+            activeProviderId.value = savedConfigs[0].id
+        }
     } else {
-        // 如果没有API密钥，自动展开设置面板
-        showApiSettings.value = true
+        // Migration: Check for legacy data
+        const legacyKey = LocalStorage.getApiKey()
+        const legacyEndpoint = LocalStorage.getApiEndpoint()
+        const legacyModel = LocalStorage.getModelId()
+
+        const defaultProvider: ApiProviderConfig = {
+            id: 'default',
+            name: 'Default (OpenRouter)',
+            apiKey: legacyKey || '',
+            endpoint: legacyEndpoint || DEFAULT_API_ENDPOINT,
+            model: legacyModel || DEFAULT_MODEL_ID
+        }
+
+        apiConfigs.value = [defaultProvider]
+        activeProviderId.value = defaultProvider.id
+        saveConfigs()
     }
 
-    // 先设置端点，再恢复模型缓存，最后设置模型ID
-    const endpointToUse = savedEndpoint.trim() || DEFAULT_API_ENDPOINT
-    const modelIdToUse = savedModelId.trim() || DEFAULT_MODEL_ID
-
-    // 恢复模型缓存
-    restoreModelOptionsFromCache(endpointToUse)
-
-    // 设置值（这些赋值会触发 watch，但此时 hasSyncedInitialEndpoint 还是 false）
-    selectedModel.value = modelIdToUse
-    apiEndpoint.value = endpointToUse
-
-    ensureSelectedOptionPresent()
-
-    // 最后才标记初始化完成，这样后续的 watch 触发才会被当作用户操作
-    hasSyncedInitialEndpoint = true
+    // 3. Restore Model Cache for current endpoint
+    restoreModelOptionsFromCache(apiEndpoint.value)
+    
+    // 4. UI State
+    if (!apiKey.value) {
+        showApiSettings.value = true
+    }
 })
 
-// 监听API密钥变化，自动保存到本地存储
-watch(
-    apiKey,
-    (newApiKey: string, previousApiKey?: string) => {
-        const trimmed = newApiKey.trim()
-        if (trimmed) {
-            LocalStorage.saveApiKey(trimmed)
-        } else {
-            LocalStorage.clearApiKey()
-            if ((previousApiKey || '').trim()) {
-                LocalStorage.clearModelCache()
-                modelOptions.value = []
-                selectedModel.value = DEFAULT_MODEL_ID
-                modelsError.value = null
-            }
-            showApiSettings.value = true
+// --- Methods: API Config Management ---
+const saveConfigs = () => {
+    LocalStorage.saveApiConfigs(apiConfigs.value)
+    LocalStorage.saveActiveProviderId(activeProviderId.value)
+}
+
+const updateActiveProvider = (updates: Partial<ApiProviderConfig>) => {
+    const index = apiConfigs.value.findIndex(p => p.id === activeProviderId.value)
+    if (index !== -1) {
+        const updated = { ...apiConfigs.value[index], ...updates }
+        apiConfigs.value[index] = updated
+        saveConfigs()
+        
+        // If endpoint changed, handle cache
+        if (updates.endpoint) {
+             // Logic to clear/reload cache if needed could go here
+             // For now, we rely on manual fetch or simple cache restoration
         }
-    },
-    { immediate: false }
-)
+    }
+}
 
-watch(
-    apiEndpoint,
-    (newEndpoint: string, previousEndpoint?: string) => {
-        const trimmed = newEndpoint.trim()
-        const previousTrimmed = (previousEndpoint || '').trim()
+const handleAddProvider = () => {
+    const newProvider: ApiProviderConfig = {
+        id: `provider-${Date.now()}`,
+        name: 'New Provider',
+        apiKey: '',
+        endpoint: DEFAULT_API_ENDPOINT,
+        model: DEFAULT_MODEL_ID
+    }
+    apiConfigs.value.push(newProvider)
+    activeProviderId.value = newProvider.id
+    saveConfigs()
+}
 
-        if (trimmed) {
-            LocalStorage.saveApiEndpoint(trimmed)
-        } else {
-            LocalStorage.clearApiEndpoint()
+const handleDeleteProvider = (id: string) => {
+    if (apiConfigs.value.length <= 1) return
+    
+    const index = apiConfigs.value.findIndex(p => p.id === id)
+    if (index !== -1) {
+        apiConfigs.value.splice(index, 1)
+        if (activeProviderId.value === id) {
+            activeProviderId.value = apiConfigs.value[0].id
         }
+        saveConfigs()
+    }
+}
 
-        // 如果是初始化阶段（在 onMounted 中），直接返回，不做任何处理
-        if (!hasSyncedInitialEndpoint) {
-            return
-        }
+const handleSwitchProvider = (id: string) => {
+    activeProviderId.value = id
+    saveConfigs()
+    restoreModelOptionsFromCache(apiEndpoint.value)
+}
 
-        // 只有在初始化完成后，用户主动修改端点时才重置模型
-        if (trimmed !== previousTrimmed) {
-            modelOptions.value = []
-            modelsError.value = null
-            if (previousTrimmed) {
-                selectedModel.value = DEFAULT_MODEL_ID
-                LocalStorage.clearModelCache(previousTrimmed)
-            }
-            showApiSettings.value = true
-        }
-    },
-    { immediate: false }
-)
+const handleUpdateProviderName = (id: string, name: string) => {
+    const provider = apiConfigs.value.find(p => p.id === id)
+    if (provider) {
+        provider.name = name
+        saveConfigs()
+    }
+}
 
-watch(
-    selectedModel,
-    (newModel: string) => {
-        const trimmed = newModel.trim()
-        if (trimmed) {
-            LocalStorage.saveModelId(trimmed)
-        } else {
-            LocalStorage.clearModelId()
-            LocalStorage.clearModelCache(apiEndpoint.value)
-            // 避免在初始化时重置
-            if (hasSyncedInitialEndpoint) {
-                selectedModel.value = DEFAULT_MODEL_ID
-                showApiSettings.value = true
-            }
-        }
-        // 只在初始化完成后才调用 ensureSelectedOptionPresent
-        if (hasSyncedInitialEndpoint) {
-            ensureSelectedOptionPresent()
-        }
-    },
-    { immediate: false }
-)
+// --- Methods: Custom Prompts ---
+const handleSaveTemplate = (template: StyleTemplate) => {
+    userTemplates.value.push(template)
+    LocalStorage.saveCustomPrompts(userTemplates.value)
+    // Auto-select the new template
+    selectedStyle.value = template.id
+}
 
-// 注释掉：监听风格和提示词变化时清除结果的逻辑
-// 改进：保留已生成的图片，让用户可以参考上次结果来调整参数
-// watch([selectedStyle, customPrompt], () => {
-//     if (result.value || error.value) {
-//         result.value = null
-//         error.value = null
-//     }
-// })
+const handleDeleteTemplate = (id: string) => {
+    userTemplates.value = userTemplates.value.filter(t => t.id !== id)
+    LocalStorage.saveCustomPrompts(userTemplates.value)
+    if (selectedStyle.value === id) {
+        selectedStyle.value = ''
+    }
+}
 
-watch(
-    textToImagePrompt,
-    () => {
-        if (textToImageError.value) {
-            textToImageError.value = null
-        }
-    },
-    { immediate: false }
-)
+const handleImportTemplates = (templates: StyleTemplate[]) => {
+    // Filter out duplicates based on ID
+    const newTemplates = templates.filter(t => !userTemplates.value.some(existing => existing.id === t.id))
+    if (newTemplates.length > 0) {
+        userTemplates.value = [...userTemplates.value, ...newTemplates]
+        LocalStorage.saveCustomPrompts(userTemplates.value)
+        alert(`成功导入 ${newTemplates.length} 个预设！`)
+    } else {
+        alert('没有新的预设被导入（可能全部重复）。')
+    }
+}
 
+// --- Methods: Models ---
 const handleFetchModels = async () => {
     if (!apiKey.value.trim() || !apiEndpoint.value.trim()) return
 
@@ -354,8 +402,10 @@ const handleFetchModels = async () => {
         modelOptions.value = options
         LocalStorage.saveModelCache(apiEndpoint.value, options)
 
+        // Auto-select logic
+        const currentModelId = selectedModel.value
         const preferred =
-            options.find(option => option.id === selectedModel.value) ||
+            options.find(option => option.id === currentModelId) ||
             options.find(option => option.id === DEFAULT_MODEL_ID) ||
             options.find(option => option.supportsImages) ||
             options[0]
@@ -365,7 +415,7 @@ const handleFetchModels = async () => {
     } catch (fetchError) {
         modelsError.value = fetchError instanceof Error ? fetchError.message : '无法获取模型列表'
         modelOptions.value = []
-        selectedModel.value = DEFAULT_MODEL_ID
+        // Don't reset selected model on error, keep what user typed/selected
     } finally {
         isFetchingModels.value = false
     }
@@ -481,6 +531,7 @@ const buildFallbackLabel = (modelId: string): string => {
     return lastSegment || modelId
 }
 
+// --- Methods: Generation ---
 const pushImageToUpload = (image: string | null) => {
     if (!image) return
     const filtered = selectedImages.value.filter(existing => existing !== image)
@@ -526,7 +577,6 @@ const canGenerate = computed(
         !isLoading.value
 )
 
-// 判断是否显示宽高比选择器（Gemini 2.5 Flash Image 系列和 Gemini 3 Pro Image 模型时显示）
 const showAspectRatioSelector = computed(() => {
     const modelId = selectedModel.value.toLowerCase().trim()
     if (!modelId) return false
@@ -538,7 +588,6 @@ const showAspectRatioSelector = computed(() => {
            modelId.includes('gemini-3-pro-image')
 })
 
-// 判断是否显示 Gemini 3 Pro Image 配置
 const showGemini3ProConfig = computed(() => {
     const modelId = selectedModel.value.toLowerCase().trim()
     if (!modelId) return false
@@ -562,12 +611,10 @@ const handleTextToImageGenerate = async () => {
             model: selectedModel.value.trim() || DEFAULT_MODEL_ID
         }
 
-        // 如果显示宽高比选择器（Gemini 2.5 Flash Image 模型），则添加 aspectRatio 参数
         if (showAspectRatioSelector.value) {
             request.aspectRatio = selectedAspectRatio.value
         }
 
-        // 如果显示 Gemini 3 Pro Image 配置，则添加相应参数
         if (showGemini3ProConfig.value) {
             request.imageSize = gemini3ImageSize.value
             request.enableGoogleSearch = gemini3EnableGoogleSearch.value
@@ -582,10 +629,6 @@ const handleTextToImageGenerate = async () => {
     } finally {
         isTextToImageLoading.value = false
     }
-}
-
-const handlePushTextImageToUpload = () => {
-    pushImageToUpload(textToImageResult.value)
 }
 
 const handlePushDisplayResult = () => {
@@ -633,12 +676,13 @@ const handleGenerate = async () => {
     latestResultSource.value = 'image'
     isLoading.value = true
     error.value = null
-    // 立即清除之前的结果，确保用户看到新的生成过程
     result.value = null
 
     try {
-        // 使用选中的样式模板或自定义提示词
-        const prompt = selectedStyle.value ? styleTemplates.find(t => t.id === selectedStyle.value)?.prompt || customPrompt.value : customPrompt.value
+        // Use selected style prompt or custom prompt
+        // Note: styleTemplates are system templates, userTemplates are user custom ones
+        const allTemplates = [...styleTemplates, ...userTemplates.value]
+        const prompt = selectedStyle.value ? allTemplates.find(t => t.id === selectedStyle.value)?.prompt || customPrompt.value : customPrompt.value
 
         const request: GenerateRequest = {
             prompt,
@@ -648,12 +692,10 @@ const handleGenerate = async () => {
             model: selectedModel.value.trim() || DEFAULT_MODEL_ID
         }
 
-        // 如果显示宽高比选择器（Gemini 2.5 Flash Image 模型），则添加 aspectRatio 参数
         if (showAspectRatioSelector.value) {
             request.aspectRatio = selectedAspectRatio.value
         }
 
-        // 如果显示 Gemini 3 Pro Image 配置，则添加相应参数
         if (showGemini3ProConfig.value) {
             request.imageSize = gemini3ImageSize.value
             request.enableGoogleSearch = gemini3EnableGoogleSearch.value
@@ -664,18 +706,9 @@ const handleGenerate = async () => {
         latestResultSource.value = 'image'
     } catch (err) {
         error.value = err instanceof Error ? err.message : '生成失败'
-        // 生成失败时也要清除结果
         result.value = null
     } finally {
         isLoading.value = false
     }
-}
-
-const handleReset = () => {
-    selectedImages.value = []
-    selectedStyle.value = ''
-    customPrompt.value = ''
-    result.value = null
-    error.value = null
 }
 </script>

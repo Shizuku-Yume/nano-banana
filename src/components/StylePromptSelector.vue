@@ -1,127 +1,229 @@
 <template>
     <div class="bg-white border-4 border-black border-t-0 rounded-b-lg p-4 shadow-lg h-full flex flex-col">
-        <!-- 选择模式的标签页 -->
-        <div class="flex mb-4 bg-gray-100 rounded-lg p-1 border-2 border-black">
-            <button
-                @click="activeTab = 'style'"
-                :class="[
-                    'flex-1 py-2 px-3 rounded-md font-bold transition-all flex items-center justify-center gap-2',
-                    activeTab === 'style' ? 'bg-yellow-300 text-black' : 'text-gray-600 hover:text-black'
-                ]"
-            >
-                🎨 预设风格
-            </button>
-            <button
-                @click="activeTab = 'custom'"
-                :class="[
-                    'flex-1 py-2 px-3 rounded-md font-bold transition-all flex items-center justify-center gap-2',
-                    activeTab === 'custom' ? 'bg-yellow-300 text-black' : 'text-gray-600 hover:text-black'
-                ]"
-            >
-                ✏️ 自定义提示词
-            </button>
-        </div>
-
-        <!-- 预设风格选择 -->
-        <div v-if="activeTab === 'style'" class="space-y-2 flex-1 overflow-y-auto">
-            <div
-                v-for="template in templates"
-                :key="template.id"
-                @click="selectStyle(template.id)"
-                :class="[
-                    'p-4 rounded-lg border-2 border-black cursor-pointer transition-all',
-                    selectedStyle === template.id ? 'bg-yellow-300 border-orange-500' : 'bg-yellow-50 hover:bg-yellow-100'
-                ]"
-            >
-                <div class="flex items-start gap-3">
-                    <!-- 缩略图 -->
-                    <img v-if="template.image" :src="template.image" :alt="template.title" class="w-20 h-20 rounded border-2 border-black object-cover flex-shrink-0" />
-
-                    <!-- 内容 -->
-                    <div class="flex-1 min-w-0">
-                        <div class="text-base font-bold mb-1">{{ template.title }}</div>
-                        <p class="text-sm text-gray-600 mb-2">{{ template.description }}</p>
-
-                        <!-- 可展开的提示词预览 -->
-                        <details class="group">
-                            <summary class="cursor-pointer text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">
-                                <span>查看完整提示词</span>
-                                <svg class="w-3 h-3 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </summary>
-                            <div class="mt-2 p-2 bg-gray-100 rounded text-xs text-gray-700 border">
-                                {{ template.prompt }}
-                            </div>
-                        </details>
-                    </div>
-                </div>
+        <!-- 顶部操作栏 -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="text-sm font-bold text-gray-700">
+                📝 提示词编辑
+            </div>
+            <div class="flex gap-2">
+                <button
+                    @click="copyAllPresets"
+                    class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded border border-gray-300 transition-colors flex items-center gap-1"
+                    title="复制所有预设到剪贴板"
+                >
+                    📋 导出
+                </button>
+                <button
+                    @click="importPresets"
+                    class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded border border-gray-300 transition-colors flex items-center gap-1"
+                    title="从剪贴板导入预设"
+                >
+                    📥 导入
+                </button>
             </div>
         </div>
 
-        <!-- 自定义提示词 -->
-        <div v-else class="flex flex-col gap-3 flex-1">
-            <label class="font-bold flex items-center gap-2">🍌 描述你的创意想法：</label>
+        <!-- 主要编辑区域 -->
+        <div class="flex flex-col gap-3 flex-1">
+            <div class="relative flex-1">
+                <textarea
+                    :value="customPrompt"
+                    @input="updateCustomPrompt(($event.target as HTMLTextAreaElement).value)"
+                    placeholder="在此输入提示词，或从下方选择预设..."
+                    class="w-full h-full px-4 py-3 border-2 border-black rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent min-h-[120px]"
+                />
+                <button
+                    v-if="customPrompt"
+                    @click="saveAsPreset"
+                    class="absolute bottom-3 right-3 text-xs bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-3 py-1.5 rounded-full shadow-sm transition-colors flex items-center gap-1"
+                >
+                    💾 存为预设
+                </button>
+            </div>
+        </div>
 
-            <textarea
-                :value="customPrompt"
-                @input="updateCustomPrompt(($event.target as HTMLTextAreaElement).value)"
-                placeholder="例如：将图片转换为超现实主义风格，加入漂浮的香蕉和鲜艳的色彩..."
-                class="w-full px-4 py-3 border-2 border-black rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent flex-1 min-h-[160px]"
-            />
+        <!-- 预设列表区域 -->
+        <div class="mt-4">
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-sm font-bold text-gray-700">📚 预设风格库</label>
+                <span class="text-xs text-gray-500">点击应用，再次点击取消</span>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                <!-- 用户自定义预设 -->
+                <div v-if="userTemplates.length > 0" class="space-y-2">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">自定义</div>
+                    <div
+                        v-for="template in userTemplates"
+                        :key="template.id"
+                        class="group relative"
+                    >
+                        <div
+                            @click="toggleStyle(template)"
+                            :class="[
+                                'p-3 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3',
+                                selectedStyle === template.id 
+                                    ? 'bg-yellow-100 border-orange-500' 
+                                    : 'bg-white border-gray-200 hover:border-orange-300'
+                            ]"
+                        >
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-bold truncate">{{ template.title }}</div>
+                                <div class="text-xs text-gray-500 truncate">{{ template.description }}</div>
+                            </div>
+                            <button
+                                @click.stop="deletePreset(template.id)"
+                                class="opacity-0 group-hover:opacity-100 p-1.5 text-red-500 hover:bg-red-50 rounded transition-all"
+                                title="删除预设"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-            <p class="text-sm text-gray-600 font-medium flex items-center gap-1">💡 描述越具体，效果越好！</p>
+                <!-- 系统预设 -->
+                <div class="space-y-2 mt-2">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">系统预设</div>
+                    <div
+                        v-for="template in templates"
+                        :key="template.id"
+                        @click="toggleStyle(template)"
+                        :class="[
+                            'p-3 rounded-lg border-2 cursor-pointer transition-all flex items-center gap-3',
+                            selectedStyle === template.id 
+                                ? 'bg-yellow-100 border-orange-500' 
+                                : 'bg-white border-gray-200 hover:border-orange-300'
+                        ]"
+                    >
+                        <img 
+                            v-if="template.image" 
+                            :src="template.image" 
+                            class="w-10 h-10 rounded object-cover border border-gray-200 bg-gray-50"
+                        />
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-bold truncate">{{ template.title }}</div>
+                            <div class="text-xs text-gray-500 truncate">{{ template.description }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import type { StyleTemplate } from '../types'
 
 const props = defineProps<{
     selectedStyle: string
     customPrompt: string
     templates: StyleTemplate[]
+    userTemplates: StyleTemplate[]
 }>()
 
 const emit = defineEmits<{
     'update:selectedStyle': [value: string]
     'update:customPrompt': [value: string]
+    'save-template': [template: StyleTemplate]
+    'delete-template': [id: string]
+    'import-templates': [templates: StyleTemplate[]]
 }>()
 
-const activeTab = ref<'style' | 'custom'>('style')
-
-// 监听选择状态，自动切换标签页
-watch(
-    () => props.selectedStyle,
-    newValue => {
-        if (newValue && activeTab.value !== 'style') {
-            activeTab.value = 'style'
-        }
-    }
-)
-
-watch(
-    () => props.customPrompt,
-    newValue => {
-        if (newValue && activeTab.value !== 'custom') {
-            activeTab.value = 'custom'
-        }
-    }
-)
-
-const selectStyle = (styleId: string) => {
-    // 选择风格时清空自定义提示词
-    emit('update:customPrompt', '')
-    emit('update:selectedStyle', props.selectedStyle === styleId ? '' : styleId)
-}
-
 const updateCustomPrompt = (value: string) => {
-    // 输入自定义提示词时清空风格选择
-    if (value) {
-        emit('update:selectedStyle', '')
+    // 如果用户修改了内容，且内容与当前选中的预设不一致，则取消选中预设
+    if (props.selectedStyle) {
+        const currentTemplate = [...props.templates, ...props.userTemplates].find(t => t.id === props.selectedStyle)
+        if (currentTemplate && currentTemplate.prompt !== value) {
+            emit('update:selectedStyle', '')
+        }
     }
     emit('update:customPrompt', value)
+}
+
+const toggleStyle = (template: StyleTemplate) => {
+    if (props.selectedStyle === template.id) {
+        // 取消选中，不清除文本，让用户可以在此基础上修改
+        emit('update:selectedStyle', '')
+    } else {
+        // 选中，应用预设文本
+        emit('update:selectedStyle', template.id)
+        emit('update:customPrompt', template.prompt)
+    }
+}
+
+const saveAsPreset = () => {
+    const title = prompt('请输入预设名称：', '我的自定义风格')
+    if (!title) return
+
+    const newTemplate: StyleTemplate = {
+        id: `custom-${Date.now()}`,
+        title,
+        prompt: props.customPrompt,
+        description: '用户自定义风格',
+        image: '' // 自定义预设暂不支持图片
+    }
+
+    emit('save-template', newTemplate)
+}
+
+const deletePreset = (id: string) => {
+    if (confirm('确定要删除这个预设吗？')) {
+        emit('delete-template', id)
+    }
+}
+
+const copyAllPresets = async () => {
+    const allPresets = [...props.userTemplates, ...props.templates]
+    try {
+        await navigator.clipboard.writeText(JSON.stringify(allPresets, null, 2))
+        alert('✅ 已将所有预设复制到剪贴板！')
+    } catch (err) {
+        console.error('复制失败:', err)
+        alert('❌ 复制失败，请检查浏览器权限')
+    }
+}
+
+const importPresets = async () => {
+    try {
+        const text = await navigator.clipboard.readText()
+        if (!text) {
+            alert('⚠️ 剪贴板为空')
+            return
+        }
+
+        let imported: any
+        try {
+            imported = JSON.parse(text)
+        } catch (e) {
+            alert('❌ 剪贴板内容不是有效的 JSON 格式')
+            return
+        }
+
+        if (!Array.isArray(imported)) {
+            // 尝试支持单个对象导入
+            if (typeof imported === 'object' && imported.id && imported.prompt) {
+                imported = [imported]
+            } else {
+                alert('❌ 格式错误：需要预设数组')
+                return
+            }
+        }
+
+        // 简单的格式验证
+        const validTemplates = imported.filter((t: any) => t.id && t.prompt && t.title) as StyleTemplate[]
+        
+        if (validTemplates.length === 0) {
+            alert('❌ 没有找到有效的预设数据')
+            return
+        }
+
+        if (confirm(`找到 ${validTemplates.length} 个预设，确定要导入吗？\n注意：ID 冲突的预设将被跳过。`)) {
+            emit('import-templates', validTemplates)
+        }
+    } catch (err) {
+        console.error('导入失败:', err)
+        alert('❌ 导入失败，请检查浏览器权限')
+    }
 }
 </script>

@@ -43,3 +43,11 @@ export interface StyleTemplate {
     image: string
     description: string
 }
+
+export interface ApiProviderConfig {
+    id: string
+    name: string
+    apiKey: string
+    endpoint: string
+    model: string
+}

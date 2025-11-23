@@ -1,4 +1,4 @@
-import type { ModelOption } from '../types'
+import type { ModelOption, StyleTemplate, ApiProviderConfig } from '../types'
 
 // 本地存储工具类
 export class LocalStorage {
@@ -150,5 +150,67 @@ export class LocalStorage {
 
     private static normalizeEndpoint(endpoint: string): string {
         return endpoint.trim().replace(/\/$/, '').toLowerCase()
+    }
+
+    // --- Custom Prompts ---
+    private static readonly CUSTOM_PROMPTS = 'nano-banana-custom-prompts'
+
+    static saveCustomPrompts(prompts: StyleTemplate[]): void {
+        try {
+            localStorage.setItem(this.CUSTOM_PROMPTS, JSON.stringify(prompts))
+        } catch (error) {
+            console.warn('无法保存自定义提示词到本地存储:', error)
+        }
+    }
+
+    static getCustomPrompts(): StyleTemplate[] {
+        try {
+            const raw = localStorage.getItem(this.CUSTOM_PROMPTS)
+            if (!raw) return []
+            return JSON.parse(raw) as StyleTemplate[]
+        } catch (error) {
+            console.warn('无法从本地存储读取自定义提示词:', error)
+            return []
+        }
+    }
+
+    // --- API Configs ---
+    private static readonly API_CONFIGS = 'nano-banana-api-configs'
+    private static readonly ACTIVE_PROVIDER_ID = 'nano-banana-active-provider-id'
+
+    static saveApiConfigs(configs: ApiProviderConfig[]): void {
+        try {
+            localStorage.setItem(this.API_CONFIGS, JSON.stringify(configs))
+        } catch (error) {
+            console.warn('无法保存API配置到本地存储:', error)
+        }
+    }
+
+    static getApiConfigs(): ApiProviderConfig[] {
+        try {
+            const raw = localStorage.getItem(this.API_CONFIGS)
+            if (!raw) return []
+            return JSON.parse(raw) as ApiProviderConfig[]
+        } catch (error) {
+            console.warn('无法从本地存储读取API配置:', error)
+            return []
+        }
+    }
+
+    static saveActiveProviderId(id: string): void {
+        try {
+            localStorage.setItem(this.ACTIVE_PROVIDER_ID, id)
+        } catch (error) {
+            console.warn('无法保存当前API提供商ID:', error)
+        }
+    }
+
+    static getActiveProviderId(): string {
+        try {
+            return localStorage.getItem(this.ACTIVE_PROVIDER_ID) || ''
+        } catch (error) {
+            console.warn('无法读取当前API提供商ID:', error)
+            return ''
+        }
     }
 }

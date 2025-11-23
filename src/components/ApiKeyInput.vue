@@ -1,14 +1,53 @@
 <template>
     <div class="bg-white border-4 border-black rounded-lg p-3 shadow-lg">
-        <div class="mb-2">
+        <div class="mb-3">
             <h3 class="font-bold text-gray-800 flex items-center gap-2 mb-2">
                 🔑 API 配置
-                <span v-if="modelValue" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">密钥已保存</span>
+                <span v-if="modelValue" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">已配置</span>
             </h3>
-            <p class="text-sm text-gray-600">可自定义 API 密钥与端点，默认使用 OpenRouter</p>
+            
+            <!-- 提供商选择与管理 -->
+            <div class="flex items-center gap-2 mb-3">
+                <select 
+                    :value="activeProviderId" 
+                    @change="handleProviderChange"
+                    class="flex-1 px-2 py-1.5 border-2 border-gray-300 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                    <option v-for="p in providers" :key="p.id" :value="p.id">
+                        {{ p.name }}
+                    </option>
+                </select>
+                <button 
+                    @click="addProvider"
+                    class="px-2 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-bold"
+                    title="添加新提供商"
+                >
+                    ➕
+                </button>
+                <button 
+                    v-if="providers.length > 1"
+                    @click="deleteProvider"
+                    class="px-2 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-bold"
+                    title="删除当前提供商"
+                >
+                    🗑️
+                </button>
+            </div>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <!-- 提供商名称编辑 -->
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1">配置名称</label>
+                <input
+                    type="text"
+                    :value="currentProviderName"
+                    @change="updateProviderName"
+                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                    placeholder="例如：OpenRouter, Local, etc."
+                />
+            </div>
+
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">API 密钥</label>
                 <div class="flex gap-2">
@@ -16,23 +55,14 @@
                         type="password"
                         :value="modelValue"
                         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-                        placeholder="输入你的 OpenRouter API 密钥..."
+                        placeholder="输入 API 密钥..."
                         class="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                     />
-                    <button
-                        v-if="modelValue"
-                        @click="clearApiKey"
-                        class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-                        title="清除缓存的API密钥"
-                    >
-                        🗑️
-                    </button>
                 </div>
                 <div class="flex items-center justify-between mt-1">
                     <p class="text-xs text-gray-500">
-                        从 <a href="https://openrouter.ai/" target="_blank" class="text-orange-500 hover:underline font-medium">OpenRouter.ai</a> 获取你的 API 密钥
+                        从 <a href="https://openrouter.ai/" target="_blank" class="text-orange-500 hover:underline font-medium">OpenRouter.ai</a> 或其他提供商获取
                     </p>
-                    <p v-if="modelValue" class="text-xs text-green-600 flex items-center gap-1">💾 已自动保存到本地</p>
                 </div>
             </div>
 
@@ -55,7 +85,6 @@
                         ♻️
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">如果你的模型提供方与 OpenRouter 不同，可在此填写自定义地址</p>
             </div>
 
             <div>
@@ -98,10 +127,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRefs } from 'vue'
+import { computed, toRefs, ref, watch } from 'vue'
 import { DEFAULT_API_ENDPOINT, DEFAULT_MODEL_ID } from '../config/api'
-import { LocalStorage } from '../utils/storage'
-import type { ModelOption } from '../types'
+import type { ModelOption, ApiProviderConfig } from '../types'
 
 const props = defineProps<{
     modelValue: string
@@ -110,6 +138,8 @@ const props = defineProps<{
     model: string
     modelLoading: boolean
     modelError: string | null
+    providers: ApiProviderConfig[]
+    activeProviderId: string
 }>()
 
 const emit = defineEmits<{
@@ -118,20 +148,23 @@ const emit = defineEmits<{
     'update:model': [value: string]
     'fetch-models': []
     'model-picked': []
+    'add-provider': []
+    'delete-provider': [id: string]
+    'switch-provider': [id: string]
+    'update-provider-name': [id: string, name: string]
 }>()
 
-const { modelValue, endpoint, models, model } = toRefs(props)
+const { modelValue, endpoint, models, model, providers, activeProviderId } = toRefs(props)
 
-const clearApiKey = () => {
-    LocalStorage.clearApiKey()
-    LocalStorage.clearModelId()
-    emit('update:modelValue', '')
-    emit('update:model', '')
-}
+const currentProviderName = computed(() => {
+    const p = providers.value.find(p => p.id === activeProviderId.value)
+    return p ? p.name : ''
+})
 
 const resetEndpoint = () => {
     emit('update:endpoint', DEFAULT_API_ENDPOINT)
-    emit('update:model', '')
+    // 重置端点时不一定要重置模型，除非模型不兼容，这里暂且保留原逻辑，但稍微宽松点
+    // emit('update:model', '') 
 }
 
 const isCustomEndpoint = computed(() => endpoint.value !== '' && endpoint.value !== DEFAULT_API_ENDPOINT)
@@ -166,6 +199,28 @@ const handleModelChange = (event: Event) => {
     const value = (event.target as HTMLSelectElement).value
     emit('update:model', value)
     emit('model-picked')
+}
+
+const handleProviderChange = (event: Event) => {
+    const value = (event.target as HTMLSelectElement).value
+    emit('switch-provider', value)
+}
+
+const addProvider = () => {
+    emit('add-provider')
+}
+
+const deleteProvider = () => {
+    if (confirm('确定要删除当前配置吗？')) {
+        emit('delete-provider', activeProviderId.value)
+    }
+}
+
+const updateProviderName = (event: Event) => {
+    const value = (event.target as HTMLInputElement).value
+    if (value.trim()) {
+        emit('update-provider-name', activeProviderId.value, value.trim())
+    }
 }
 
 function buildFallbackLabel(modelId: string): string {
