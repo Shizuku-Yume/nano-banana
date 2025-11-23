@@ -18,6 +18,11 @@
                                 hKFirEs
                             </a>
                             •
+                            3rd Revision by
+                            <a href="https://github.com/Shizuku-Yume" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
+                                ShizukuYume
+                            </a>
+                            •
                             Forked from
                             <a href="https://github.com/liu-ziting/nano-banana" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
                                 Liuziting

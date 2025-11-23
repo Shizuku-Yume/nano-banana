@@ -142,11 +142,13 @@ const saveAsPreset = () => {
     const title = prompt('请输入预设名称：', '我的自定义风格')
     if (!title) return
 
+    const description = prompt('请输入预设描述（可选）：', '用户自定义风格') || '用户自定义风格'
+
     const newTemplate: StyleTemplate = {
         id: `custom-${Date.now()}`,
         title,
         prompt: props.customPrompt,
-        description: '用户自定义风格',
+        description,
         image: '' 
     }
 
