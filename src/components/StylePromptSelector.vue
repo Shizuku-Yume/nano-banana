@@ -99,6 +99,7 @@ const props = defineProps<{
     customPrompt: string
     templates: StyleTemplate[]
     userTemplates: StyleTemplate[]
+    mode: 'text-to-image' | 'image-to-image'
 }>()
 
 const emit = defineEmits<{
@@ -149,7 +150,8 @@ const saveAsPreset = () => {
         title,
         prompt: props.customPrompt,
         description,
-        image: '' 
+        image: '',
+        mode: props.mode
     }
 
     emit('save-template', newTemplate)
