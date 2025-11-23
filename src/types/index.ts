@@ -42,6 +42,7 @@ export interface StyleTemplate {
     prompt: string
     image: string
     description: string
+    mode?: 'text-to-image' | 'image-to-image' // Optional, defaults to image-to-image if undefined for backward compatibility
 }
 
 export interface ApiProviderConfig {
