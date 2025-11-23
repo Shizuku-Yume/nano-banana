@@ -121,10 +121,32 @@
                         <div class="flex-1">
                             <StylePromptSelector 
                                 v-model:selectedStyle="selectedStyle" 
-                        <span v-if="!isTextToImageLoading" class="flex items-center gap-2 text-xl">🍌 施展魔法（文生图）</span>
-                        <span v-else class="flex items-center gap-2 text-xl">🍌 正在施法...</span>
-                        <div v-if="isTextToImageLoading" class="w-8 h-8 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                    </button>
+                                v-model:customPrompt="customPrompt" 
+                                :templates="styleTemplates"
+                                :user-templates="userTemplates"
+                                @save-template="handleSaveTemplate"
+                                @delete-template="handleDeleteTemplate"
+                                @import-templates="handleImportTemplates"
+                                @open-warehouse="showWarehouse = true"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 生成按钮 -->
+            <div class="mb-6">
+                <div class="flex flex-col gap-4 lg:flex-row lg:gap-6">
+                    <button
+                        @click="handleTextToImageGenerate"
+                        :disabled="!canGenerateTextImage"
+                        :class="[
+                            'flex-1 px-6 py-4 rounded-lg font-bold text-white text-lg transition-all duration-200 flex items-center justify-center gap-3 border-4 border-black shadow-lg',
+                            canGenerateTextImage
+                                ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 hover:-translate-y-1 hover:shadow-xl'
+                                : 'bg-gray-400 cursor-not-allowed'
+                        ]"
+                    >
                     <button
                         @click="handleGenerate"
                         :disabled="!canGenerate"
