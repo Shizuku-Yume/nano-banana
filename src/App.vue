@@ -113,8 +113,9 @@
                                 <StylePromptSelector 
                                     v-model:selectedStyle="selectedStyle" 
                                     v-model:customPrompt="customPrompt" 
-                                    :templates="styleTemplates"
-                                    :user-templates="userTemplates"
+                                    :templates="currentModeTemplates"
+                                    :user-templates="currentModeUserTemplates"
+                                    :mode="generationMode"
                                     @save-template="handleSaveTemplate"
                                     @delete-template="handleDeleteTemplate"
                                     @import-templates="handleImportTemplates"
@@ -156,8 +157,9 @@
                                 <StylePromptSelector 
                                     v-model:selectedStyle="selectedStyle" 
                                     v-model:customPrompt="customPrompt" 
-                                    :templates="styleTemplates"
-                                    :user-templates="userTemplates"
+                                    :templates="currentModeTemplates"
+                                    :user-templates="currentModeUserTemplates"
+                                    :mode="generationMode"
                                     @save-template="handleSaveTemplate"
                                     @delete-template="handleDeleteTemplate"
                                     @import-templates="handleImportTemplates"
@@ -189,7 +191,7 @@
                 </div>
 
                 <!-- Generate Button -->
-                <div class="flex justify-center mt-4">
+                <div class="flex justify-center mt-4 mb-12">
                     <button
                         @click="handleUnifiedGenerate"
                         :disabled="!canUnifiedGenerate"
