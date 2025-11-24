@@ -1,3 +1,11 @@
+<template>
+    <div class="space-y-4">
+        <!-- Image Size Selection -->
+        <div>
+            <label class="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                📏 图像尺寸
+            </label>
+            <select
                 :value="imageSize"
                 @change="$emit('update:imageSize', ($event.target as HTMLInputElement).value)"
                 class="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-medium"
