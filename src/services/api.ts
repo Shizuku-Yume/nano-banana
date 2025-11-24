@@ -137,7 +137,7 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
     throw new Error(`在 ${maxRetries} 次尝试后仍未能生成图片。最后错误: ${lastError?.message || '未知错误'}`)
 }
 
-export async function fetchModels(apikey: string, endpoint: string): Promise<ApiModel[]> {
+export async function fetchModels(endpoint: string, apikey: string): Promise<ApiModel[]> {
     const apiEndpoint = endpoint?.trim() || DEFAULT_API_ENDPOINT
     const modelsUrl = resolveModelsEndpoint(apiEndpoint)
 
