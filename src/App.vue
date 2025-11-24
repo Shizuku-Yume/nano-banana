@@ -400,8 +400,13 @@ const handleFetchModels = async () => {
         }
 
         const models = await fetchModels(apiEndpoint.value, apiKey.value)
-        modelOptions.value = models
-        LocalStorage.saveModelCache(apiEndpoint.value, models)
+        modelOptions.value = models.map(m => ({
+            id: m.id,
+            label: m.name || m.id.split('/').pop() || m.id,
+            description: m.description,
+            supportsImages: true // Assume all fetched models support images for now, or refine logic
+        }))
+        LocalStorage.saveModelCache(apiEndpoint.value, modelOptions.value)
     } catch (err) {
         modelsError.value = err instanceof Error ? err.message : '获取模型列表失败'
     } finally {

@@ -109,7 +109,7 @@
                 <p v-if="modelError" class="text-xs text-red-600 mt-2">⚠️ {{ modelError }}</p>
 
                 <div class="mt-3">
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">选择文生图模型</label>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">选择生图模型</label>
                     <select
                         :value="model"
                         @change="handleModelChange"
