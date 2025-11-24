@@ -400,12 +400,21 @@ const handleFetchModels = async () => {
         }
 
         const models = await fetchModels(apiEndpoint.value, apiKey.value)
-        modelOptions.value = models.map(m => ({
-            id: m.id,
-            label: m.name || m.id.split('/').pop() || m.id,
-            description: m.description,
-            supportsImages: true // Assume all fetched models support images for now, or refine logic
-        }))
+        modelOptions.value = models.map(m => {
+            const id = m.id.toLowerCase()
+            const name = (m.name || '').toLowerCase()
+            // Keywords that strongly suggest image generation capability
+            const imageKeywords = ['image', 'diffusion', 'flux', 'dall-e', 'midjourney', 'recraft', 'ideogram', 'paint', 'draw', 'picture', 'art']
+            // Exclude common false positives (e.g. "vision" usually means input, "embedding" is for embeddings)
+            const isImageModel = imageKeywords.some(k => id.includes(k) || name.includes(k)) && !id.includes('embedding')
+            
+            return {
+                id: m.id,
+                label: m.name || m.id.split('/').pop() || m.id,
+                description: m.description,
+                supportsImages: isImageModel
+            }
+        })
         LocalStorage.saveModelCache(apiEndpoint.value, modelOptions.value)
     } catch (err) {
         modelsError.value = err instanceof Error ? err.message : '获取模型列表失败'

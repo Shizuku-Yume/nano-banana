@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white border-4 border-black border-t-0 rounded-b-lg p-4 shadow-lg">
+    <div class="space-y-4">
         <label class="block text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
             📐 图像宽高比
         </label>
