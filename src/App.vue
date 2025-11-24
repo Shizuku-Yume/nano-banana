@@ -305,13 +305,141 @@ const selectedAspectRatio = ref('1:1')
 const gemini3ImageSize = ref('2K')
 const gemini3EnableGoogleSearch = ref(false)
 
-// ... (Lifecycle & Initialization remains same) ...
+// --- Lifecycle ---
+onMounted(() => {
+    // Load API Configs
+    const configs = LocalStorage.getApiConfigs()
+    if (configs.length > 0) {
+        apiConfigs.value = configs
+        const activeId = LocalStorage.getActiveProviderId()
+        if (activeId && configs.some(c => c.id === activeId)) {
+            activeProviderId.value = activeId
+        } else {
+            activeProviderId.value = configs[0].id
+        }
+    } else {
+        // Initialize with default if empty
+        const defaultProvider: ApiProviderConfig = {
+            id: crypto.randomUUID(),
+            name: 'Default',
+            apiKey: LocalStorage.getApiKey(),
+            endpoint: LocalStorage.getApiEndpoint() || DEFAULT_API_ENDPOINT,
+            model: LocalStorage.getModelId() || DEFAULT_MODEL_ID
+        }
+        apiConfigs.value = [defaultProvider]
+        activeProviderId.value = defaultProvider.id
+        LocalStorage.saveApiConfigs(apiConfigs.value)
+        LocalStorage.saveActiveProviderId(activeProviderId.value)
+    }
 
-// ... (API Config Management remains same) ...
+    // Load User Templates
+    userTemplates.value = LocalStorage.getCustomPrompts()
+})
 
-// ... (Custom Prompts methods remain same) ...
+// --- API Config Management ---
+const saveApiConfigs = () => {
+    LocalStorage.saveApiConfigs(apiConfigs.value)
+    LocalStorage.saveActiveProviderId(activeProviderId.value)
+}
 
-// ... (Model methods remain same) ...
+const updateActiveProvider = (updates: Partial<ApiProviderConfig>) => {
+    const index = apiConfigs.value.findIndex(p => p.id === activeProviderId.value)
+    if (index !== -1) {
+        apiConfigs.value[index] = { ...apiConfigs.value[index], ...updates }
+        saveApiConfigs()
+    }
+}
+
+const handleAddProvider = () => {
+    const newProvider: ApiProviderConfig = {
+        id: crypto.randomUUID(),
+        name: 'New Provider',
+        apiKey: '',
+        endpoint: DEFAULT_API_ENDPOINT,
+        model: DEFAULT_MODEL_ID
+    }
+    apiConfigs.value.push(newProvider)
+    activeProviderId.value = newProvider.id
+    saveApiConfigs()
+}
+
+const handleDeleteProvider = (id: string) => {
+    if (apiConfigs.value.length <= 1) return
+    apiConfigs.value = apiConfigs.value.filter(p => p.id !== id)
+    if (activeProviderId.value === id) {
+        activeProviderId.value = apiConfigs.value[0].id
+    }
+    saveApiConfigs()
+}
+
+const handleSwitchProvider = (id: string) => {
+    activeProviderId.value = id
+    saveApiConfigs()
+}
+
+const handleUpdateProviderName = (id: string, name: string) => {
+    const provider = apiConfigs.value.find(p => p.id === id)
+    if (provider) {
+        provider.name = name
+        saveApiConfigs()
+    }
+}
+
+// --- Model Methods ---
+const handleFetchModels = async () => {
+    if (!apiKey.value || !apiEndpoint.value) return
+    
+    isFetchingModels.value = true
+    modelsError.value = null
+    
+    try {
+        // Check cache first
+        const cached = LocalStorage.getModelCache(apiEndpoint.value)
+        if (cached.length > 0) {
+            modelOptions.value = cached
+        }
+
+        const models = await fetchModels(apiEndpoint.value, apiKey.value)
+        modelOptions.value = models
+        LocalStorage.saveModelCache(apiEndpoint.value, models)
+    } catch (err) {
+        modelsError.value = err instanceof Error ? err.message : '获取模型列表失败'
+    } finally {
+        isFetchingModels.value = false
+    }
+}
+
+const handleModelPicked = () => {
+    // Optional: Auto-save or other logic
+}
+
+// --- Custom Prompts Methods ---
+const handleSaveTemplate = (template: StyleTemplate) => {
+    userTemplates.value.push(template)
+    LocalStorage.saveCustomPrompts(userTemplates.value)
+    selectedStyle.value = template.id
+}
+
+const handleDeleteTemplate = (id: string) => {
+    userTemplates.value = userTemplates.value.filter(t => t.id !== id)
+    LocalStorage.saveCustomPrompts(userTemplates.value)
+    if (selectedStyle.value === id) {
+        selectedStyle.value = ''
+    }
+}
+
+const handleImportTemplates = (templates: StyleTemplate[]) => {
+    // Filter out duplicates based on ID
+    const newTemplates = templates.filter(t => !userTemplates.value.some(ut => ut.id === t.id))
+    userTemplates.value = [...userTemplates.value, ...newTemplates]
+    LocalStorage.saveCustomPrompts(userTemplates.value)
+    alert(`成功导入 ${newTemplates.length} 个预设`)
+}
+
+const handleUseWarehousePrompt = (prompt: string) => {
+    customPrompt.value = prompt
+    showWarehouse.value = false
+}
 
 // --- Methods: Generation ---
 const pushImageToUpload = (image: string | null) => {
