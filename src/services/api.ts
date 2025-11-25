@@ -91,9 +91,25 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
                 imageUrl = message.images[0].image_url.url
             }
 
-            // 检查content是否是base64图片
-            if (typeof message.content === 'string' && message.content.startsWith('data:image/')) {
+            // 检查content是否是base64图片（直接返回）
+            if (!imageUrl && typeof message.content === 'string' && message.content.startsWith('data:image/')) {
                 imageUrl = message.content
+            }
+
+            // 检查content是否包含markdown格式的base64图片 ![image](data:image/...)
+            if (!imageUrl && typeof message.content === 'string') {
+                const markdownImageMatch = message.content.match(/!\[.*?\]\((data:image\/[^)]+)\)/)
+                if (markdownImageMatch) {
+                    imageUrl = markdownImageMatch[1]
+                }
+            }
+
+            // 检查content是否包含纯文本中的base64图片 data:image/...
+            if (!imageUrl && typeof message.content === 'string') {
+                const base64Match = message.content.match(/(data:image\/[a-zA-Z0-9+/;,=]+)/)
+                if (base64Match) {
+                    imageUrl = base64Match[1]
+                }
             }
 
             if (imageUrl) {

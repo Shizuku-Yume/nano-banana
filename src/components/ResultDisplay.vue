@@ -17,7 +17,13 @@
 
             <!-- Result Image -->
             <div v-else-if="result" class="w-full h-full flex items-center justify-center relative">
-                <img :src="result" alt="生成的艺术作品" class="max-w-full max-h-[600px] rounded-lg border-2 border-black shadow-lg object-contain" />
+                <img 
+                    :src="result" 
+                    alt="生成的艺术作品" 
+                    class="max-w-full max-h-[600px] rounded-lg border-2 border-black shadow-lg object-contain cursor-pointer hover:opacity-90 transition-opacity" 
+                    @click="showPreview = true"
+                    title="点击预览大图"
+                />
                 <div class="absolute bottom-4 right-4 flex flex-col gap-2 items-stretch">
                     <button
                         v-if="canPush"
@@ -44,10 +50,35 @@
                 <p class="text-gray-600">上传图片并选择风格开始创作</p>
             </div>
         </div>
+
+        <!-- Image Preview Modal -->
+        <Teleport to="body">
+            <div 
+                v-if="showPreview && result" 
+                class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+                @click="showPreview = false"
+            >
+                <button
+                    @click="showPreview = false"
+                    class="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center text-2xl font-bold transition-all border-2 border-white/30 hover:border-white/50"
+                    title="关闭预览 (ESC)"
+                >
+                    ✕
+                </button>
+                <img 
+                    :src="result" 
+                    alt="预览大图" 
+                    class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    @click.stop
+                />
+            </div>
+        </Teleport>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
 defineProps<{
     result: string | null
     loading: boolean
@@ -59,4 +90,21 @@ defineEmits<{
     download: []
     push: []
 }>()
+
+const showPreview = ref(false)
+
+// Handle escape key to close preview
+const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && showPreview.value) {
+        showPreview.value = false
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown)
+})
 </script>
