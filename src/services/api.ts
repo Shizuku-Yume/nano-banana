@@ -117,12 +117,37 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
                 return { imageUrl }
             }
 
-            // 如果是文本回复或空回复，记录错误并重试
+            // 如果是文本回复或空回复，分析是否应该重试
             const textContent = message.content || ''
 
             if (typeof textContent === 'string' && textContent.trim()) {
                 lastError = new Error(`模型返回了文本而非图片: ${textContent}`)
                 console.warn(`第 ${attempt} 次尝试失败:`, lastError.message)
+
+                // 智能检测：如果是短文本且包含拒绝关键词，不再重试
+                const isShortText = textContent.length < 200
+                if (isShortText) {
+                    const lowerText = textContent.toLowerCase()
+                    const rejectionKeywords = [
+                        // English keywords
+                        'cannot', "can't", 'unable', 'not able', 'refuse', 'rejected',
+                        'inappropriate', 'against policy', 'violate', 'violation',
+                        'not allowed', 'not permitted', 'ethical', 'safety',
+                        'sorry', 'apologize', 'i cannot', "i can't", 'i am unable',
+                        // Chinese keywords
+                        '无法', '不能', '拒绝', '违反', '不允许', '不合适',
+                        '抱歉', '对不起', '政策', '规则', '安全', '道德'
+                    ]
+
+                    const containsRejection = rejectionKeywords.some(keyword =>
+                        lowerText.includes(keyword)
+                    )
+
+                    if (containsRejection) {
+                        console.warn('检测到模型拒绝生成，停止重试以节省token')
+                        throw new Error(`模型拒绝生成图片: ${textContent}`)
+                    }
+                }
             } else {
                 lastError = new Error('模型未返回有效图片')
                 console.warn(`第 ${attempt} 次尝试失败:`, lastError.message)
