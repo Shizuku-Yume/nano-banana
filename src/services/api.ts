@@ -128,10 +128,10 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
             } else {
                 // 模型未返回有效图片，可能是输入了不合法的内容
                 console.log('模型返回的完整消息对象:', message)
-                lastError = new Error('模型未返回有效图片')
+                lastError = new Error('模型未返回有效图片，可能输入了不合法的内容，请检查您的提示词和上传的图片')
                 console.warn(`第 ${attempt} 次尝试失败: 模型未返回有效图片，可能输入了不合法的内容`)
-                // 直接抛出错误，不再重试，避免浪费 token
-                throw new Error('模型未返回有效图片，可能输入了不合法的内容，请检查您的提示词和上传的图片')
+                // 直接退出循环，不再重试，避免浪费 token
+                break
             }
 
             // 如果还有重试次数，继续下一次尝试
