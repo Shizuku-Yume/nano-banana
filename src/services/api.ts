@@ -3,8 +3,10 @@ import { DEFAULT_API_ENDPOINT, DEFAULT_MODEL_ID } from '../config/api'
 
 export async function generateImage(request: GenerateRequest, maxRetries: number = 5): Promise<GenerateResponse> {
     let lastError: Error | null = null
+    let actualAttempts = 0
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        actualAttempts = attempt
         try {
             console.log(`尝试生成图片 (第 ${attempt}/${maxRetries} 次)...`)
 
@@ -156,7 +158,7 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
     }
 
     // 所有重试都失败后，抛出最后一次的错误
-    throw new Error(`在 ${maxRetries} 次尝试后仍未能生成图片。最后错误: ${lastError?.message || '未知错误'}`)
+    throw new Error(`在 ${actualAttempts} 次尝试后仍未能生成图片。最后错误: ${lastError?.message || '未知错误'}`)
 }
 
 export async function fetchModels(endpoint: string, apikey: string): Promise<ApiModel[]> {
