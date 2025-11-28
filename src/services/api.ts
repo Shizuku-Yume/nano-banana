@@ -1,6 +1,78 @@
 import type { ApiModel, GenerateRequest, GenerateResponse, ModelListResponse } from '../types'
 import { DEFAULT_API_ENDPOINT, DEFAULT_MODEL_ID } from '../config/api'
 
+/**
+ * Parse Server-Sent Events (SSE) streaming response
+ */
+async function parseSSEResponse(response: Response): Promise<any> {
+    const reader = response.body?.getReader()
+    if (!reader) {
+        throw new Error('Response body is not readable')
+    }
+
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let fullMessage: any = null
+
+    while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+            if (line.startsWith('data: ')) {
+                const data = line.slice(6).trim()
+                if (data === '[DONE]') continue
+                if (!data) continue
+
+                try {
+                    const json = JSON.parse(data)
+
+                    // Initialize fullMessage on first chunk
+                    if (!fullMessage) {
+                        fullMessage = {
+                            choices: [{
+                                message: {},
+                                index: 0
+                            }]
+                        }
+                    }
+
+                    // Merge delta content from streaming chunks
+                    if (json.choices?.[0]?.delta) {
+                        const delta = json.choices[0].delta
+                        const message = fullMessage.choices[0].message
+
+                        // Merge content
+                        if (delta.content !== undefined) {
+                            message.content = (message.content || '') + delta.content
+                        }
+
+                        // Merge images
+                        if (delta.images) {
+                            message.images = delta.images
+                        }
+
+                        // Merge other fields
+                        Object.keys(delta).forEach(key => {
+                            if (key !== 'content' && key !== 'images') {
+                                message[key] = delta[key]
+                            }
+                        })
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse SSE chunk:', data, e)
+                }
+            }
+        }
+    }
+
+    return fullMessage
+}
+
 export async function generateImage(request: GenerateRequest, maxRetries: number = 5): Promise<GenerateResponse> {
     let lastError: Error | null = null
     let actualAttempts = 0
@@ -64,6 +136,12 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
                 payload.image_config = imageConfig
             }
 
+            // 启用流式模式
+            payload.stream = true
+
+            let data: any
+            let isStreamResponse = false
+
             const response = await fetch(apiEndpoint, {
                 method: 'POST',
                 headers: {
@@ -78,7 +156,21 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
                 throw new Error(`API error ${response.status}: ${errorText}`)
             }
 
-            const data = await response.json()
+            // 检查响应类型是否为流式
+            const contentType = response.headers.get('content-type') || ''
+            if (contentType.includes('text/event-stream') || contentType.includes('application/x-ndjson')) {
+                console.log('使用流式模式解析响应')
+                isStreamResponse = true
+                data = await parseSSEResponse(response)
+
+                if (!data) {
+                    throw new Error('流式响应解析失败')
+                }
+            } else {
+                // 非流式响应
+                console.log('使用非流式模式解析响应')
+                data = await response.json()
+            }
 
             // 统一使用标准 OpenAI 格式响应处理
             if (!data.choices?.[0]?.message) {
