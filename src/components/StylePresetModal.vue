@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { ImagePlus, X } from 'lucide-vue-next'
 import { StylePreset } from '../types'
 import Modal from './ui/Modal.vue'
-import Input from './ui/Input.vue'
 import Button from './ui/Button.vue'
-import ReferenceImages from './ReferenceImages.vue'
 
 const props = defineProps<{
   preset?: StylePreset
@@ -18,32 +17,35 @@ const emit = defineEmits<{
 
 const name = ref('')
 const description = ref('')
-const referenceImages = ref<string[]>([])
+const thumbnailImage = ref<string | null>(null)
 const error = ref('')
 
 watch(() => props.preset, (newPreset) => {
   if (newPreset) {
     name.value = newPreset.name
     description.value = newPreset.description
-    referenceImages.value = [...(newPreset.referenceImages || [])]
+    thumbnailImage.value = newPreset.referenceImages?.[0] || null
   } else {
     name.value = ''
     description.value = ''
-    referenceImages.value = []
+    thumbnailImage.value = null
   }
   error.value = ''
 }, { immediate: true })
 
 const handleSave = () => {
-  if (!name.value.trim()) {
+  error.value = ''
+  const trimmedName = name.value.trim()
+  
+  if (!trimmedName) {
     error.value = 'Name is required'
     return
   }
 
   emit('save', {
-    name: name.value.trim(),
+    name: trimmedName,
     description: description.value.trim(),
-    referenceImages: referenceImages.value
+    referenceImages: thumbnailImage.value ? [thumbnailImage.value] : undefined
   })
 }
 
@@ -52,75 +54,109 @@ const handleDelete = () => {
     emit('delete', props.preset.id)
   }
 }
+
+const handleImageUpload = (e: Event) => {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    thumbnailImage.value = event.target?.result as string
+  }
+  reader.readAsDataURL(file)
+  input.value = ''
+}
+
+const removeImage = () => {
+  thumbnailImage.value = null
+}
 </script>
 
 <template>
   <Modal :open="true" :title="preset ? 'Edit Style Preset' : 'New Style Preset'" @close="$emit('close')">
-
-    <div class="space-y-6 max-h-[70vh] overflow-y-auto px-1 -mx-1 animate-scale-in">
-      <div class="space-y-2">
-        <Input
+    <div class="space-y-5">
+      <!-- Name Input -->
+      <div>
+        <label class="text-sm font-medium text-zinc-700 block mb-1.5">Name</label>
+        <input
           v-model="name"
-          label="Name"
+          type="text"
           placeholder="e.g. Neon Cyberpunk"
-          auto-focus
-          class="min-h-[44px] md:min-h-[40px]"
+          class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400"
         />
         <p v-if="error" class="text-xs text-red-500 mt-1">{{ error }}</p>
       </div>
 
-      <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 block mb-1">
-          Prompt Prefix
-        </label>
+      <!-- Prompt Prefix -->
+      <div>
+        <label class="text-sm font-medium text-zinc-700 block mb-1.5">Prompt Prefix</label>
         <textarea
           v-model="description"
           rows="3"
-          class="w-full bg-zinc-100/80 shadow-neo-inset rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-100 text-zinc-900 placeholder:text-zinc-400 resize-none min-h-[80px]"
+          class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400 resize-none"
           placeholder="Enter the style prompt that will be prepended..."
         ></textarea>
-        <p class="text-xs text-zinc-500">
+        <p class="text-xs text-zinc-500 mt-1">
           This text will be automatically added to the start of your prompts.
         </p>
       </div>
 
-      <div class="space-y-2">
-        <label class="text-sm font-medium text-zinc-700 block mb-2">
-          Reference Images
+      <!-- Thumbnail Image (Optional, only 1) -->
+      <div>
+        <label class="text-sm font-medium text-zinc-700 block mb-1.5">
+          Thumbnail Image <span class="text-zinc-400 font-normal">(Optional)</span>
         </label>
-        <ReferenceImages
-          v-model="referenceImages"
-          :max="4"
-        />
+        
+        <div class="flex items-start gap-3">
+          <!-- Image Preview or Upload Button -->
+          <div v-if="thumbnailImage" class="relative group">
+            <img 
+              :src="thumbnailImage" 
+              alt="Thumbnail"
+              class="w-20 h-20 object-cover rounded-lg border border-zinc-200"
+            />
+            <button
+              @click="removeImage"
+              class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          </div>
+          
+          <label v-else class="w-20 h-20 border-2 border-dashed border-zinc-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-colors">
+            <ImagePlus class="w-6 h-6 text-zinc-400" />
+            <span class="text-xs text-zinc-400 mt-1">Add</span>
+            <input 
+              type="file" 
+              accept="image/*" 
+              class="hidden" 
+              @change="handleImageUpload"
+            />
+          </label>
+          
+          <p class="text-xs text-zinc-500 flex-1">
+            Add a thumbnail to help identify this preset visually.
+          </p>
+        </div>
       </div>
     </div>
 
-    <div class="flex flex-col-reverse md:flex-row justify-between w-full mt-6 gap-3 md:gap-0">
+    <!-- Actions -->
+    <div class="flex justify-between items-center mt-6 pt-4 border-t border-zinc-100">
       <div>
         <Button
           v-if="preset"
           variant="danger"
+          size="sm"
           @click="handleDelete"
-          class="w-full md:w-auto min-h-[44px] md:min-h-[36px]"
         >
           Delete
         </Button>
       </div>
-      <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
-        <Button
-          variant="secondary"
-          @click="$emit('close')"
-          class="w-full md:w-auto min-h-[44px] md:min-h-[36px]"
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="primary"
-          @click="handleSave"
-          class="w-full md:w-auto min-h-[44px] md:min-h-[36px]"
-        >
-          Save Preset
-        </Button>
+      <div class="flex gap-3">
+        <Button variant="secondary" @click="$emit('close')">Cancel</Button>
+        <Button variant="primary" @click="handleSave">Save Preset</Button>
       </div>
     </div>
   </Modal>

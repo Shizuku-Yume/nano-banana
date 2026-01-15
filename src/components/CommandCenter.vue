@@ -24,12 +24,10 @@ const emit = defineEmits<{
         <slot name="settings"></slot>
       </div>
 
-      <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        <slot name="styles"></slot>
-      </div>
-
       <div class="bg-white rounded-neo-lg shadow-neo-lift p-4 flex flex-col md:flex-row gap-3 md:gap-4 items-stretch md:items-end">
-        <div class="flex gap-2 flex-shrink-0 overflow-x-auto pb-1 md:pb-0">
+        <!-- Left side: Presets + References -->
+        <div class="flex gap-2 flex-shrink-0 items-end">
+          <slot name="presets"></slot>
           <slot name="references"></slot>
         </div>
 

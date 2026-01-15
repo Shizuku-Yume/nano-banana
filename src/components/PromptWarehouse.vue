@@ -3,13 +3,31 @@
         <div class="bg-white rounded-neo-lg shadow-neo-lift w-full max-w-6xl h-[85vh] flex flex-col border border-zinc-200 overflow-hidden">
             <!-- Header -->
             <div class="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-3">
                     <h2 class="text-xl font-bold text-zinc-800 flex items-center gap-2">
                         <Library class="w-6 h-6 text-teal-600" /> 提示词仓库
-                        <span class="text-xs font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
-                            {{ mode === 'text-to-image' ? '文生图' : '图文生图' }}
-                        </span>
                     </h2>
+                    <!-- Mode Toggle -->
+                    <div class="flex bg-zinc-200 rounded-full p-0.5">
+                        <button
+                            @click="currentMode = 'text-to-image'"
+                            class="px-3 py-1 text-xs font-medium rounded-full transition-all"
+                            :class="currentMode === 'text-to-image' 
+                                ? 'bg-white text-teal-700 shadow-sm' 
+                                : 'text-zinc-500 hover:text-zinc-700'"
+                        >
+                            文生图
+                        </button>
+                        <button
+                            @click="currentMode = 'image-to-image'"
+                            class="px-3 py-1 text-xs font-medium rounded-full transition-all"
+                            :class="currentMode === 'image-to-image' 
+                                ? 'bg-white text-teal-700 shadow-sm' 
+                                : 'text-zinc-500 hover:text-zinc-700'"
+                        >
+                            图生图
+                        </button>
+                    </div>
                 </div>
                 <button 
                     @click="$emit('close')"
@@ -125,9 +143,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { Library, X, Star } from 'lucide-vue-next'
-import type { StyleTemplate } from '../types'
+import type { StyleTemplate, GenerationMode } from '../types'
 
-// Define the shape of the data from the JSON source
 interface WarehouseItem {
     title: string
     prompt: string
@@ -137,7 +154,7 @@ interface WarehouseItem {
 }
 
 const props = defineProps<{
-    mode: 'text-to-image' | 'image-to-image'
+    mode?: GenerationMode
 }>()
 
 const emit = defineEmits<{
@@ -146,6 +163,7 @@ const emit = defineEmits<{
     'save-prompt': [template: StyleTemplate]
 }>()
 
+const currentMode = ref<GenerationMode>(props.mode || 'text-to-image')
 const prompts = ref<WarehouseItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -153,11 +171,8 @@ const selectedCategory = ref('all')
 
 const categories = computed(() => {
     const cats = new Set<string>()
-    // Only extract categories from prompts that match the current mode
-    const modePrompts = prompts.value.filter(p => {
-        const targetMode = props.mode === 'text-to-image' ? 'generate' : 'edit'
-        return !p.mode || p.mode === targetMode
-    })
+    const targetMode = currentMode.value === 'text-to-image' ? 'generate' : 'edit'
+    const modePrompts = prompts.value.filter(p => !p.mode || p.mode === targetMode)
     
     modePrompts.forEach(p => {
         if (p.category) cats.add(p.category)
@@ -166,14 +181,12 @@ const categories = computed(() => {
 })
 
 const filteredPrompts = computed(() => {
-    const targetMode = props.mode === 'text-to-image' ? 'generate' : 'edit'
+    const targetMode = currentMode.value === 'text-to-image' ? 'generate' : 'edit'
     
     return prompts.value.filter(item => {
-        // 1. Filter by Mode
         const modeMatch = !item.mode || item.mode === targetMode
         if (!modeMatch) return false
 
-        // 2. Filter by Category
         if (selectedCategory.value !== 'all' && item.category !== selectedCategory.value) {
             return false
         }
@@ -209,10 +222,9 @@ const savePrompt = (item: WarehouseItem) => {
         prompt: item.prompt,
         description: item.category || '来自提示词仓库',
         image: '',
-        mode: props.mode // Save with current mode
+        mode: currentMode.value
     }
     emit('save-prompt', template)
-    alert(`已收藏 "${item.title}" 到预设库！`)
 }
 
 onMounted(() => {
@@ -221,12 +233,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.animate-fade-in {
-    animation: fadeIn 0.2s ease-out;
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
 }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 </style>

@@ -70,8 +70,8 @@
                 />
             </template>
             
-            <template #styles>
-                <StyleChips
+            <template #presets>
+                <PresetPopover
                     :presets="stylePresets"
                     :selected-id="selectedStyleId"
                     @select="selectedStyleId = $event"
@@ -122,7 +122,6 @@
 
         <PromptWarehouse
             v-if="showPromptWarehouse"
-            mode="text-to-image"
             @close="showPromptWarehouse = false"
             @use-prompt="handleUseWarehousePrompt"
             @save-prompt="handleSaveWarehousePrompt"
@@ -137,7 +136,7 @@ import { ref, computed, onMounted, shallowRef } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import CommandCenter from './components/CommandCenter.vue'
 import SettingsTray from './components/SettingsTray.vue'
-import StyleChips from './components/StyleChips.vue'
+import PresetPopover from './components/PresetPopover.vue'
 import ReferenceImages from './components/ReferenceImages.vue'
 import GenerationTimeline from './components/GenerationTimeline.vue'
 import GalleryGrid from './components/GalleryGrid.vue'
