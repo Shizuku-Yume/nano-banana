@@ -1,34 +1,34 @@
 <template>
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" @click.self="$emit('close')">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[85vh] flex flex-col border-4 border-black overflow-hidden">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-sm animate-fade-in" @click.self="$emit('close')">
+        <div class="bg-white rounded-neo-lg shadow-neo-lift w-full max-w-6xl h-[85vh] flex flex-col border border-zinc-200 overflow-hidden">
             <!-- Header -->
-            <div class="p-4 border-b-2 border-gray-100 flex justify-between items-center bg-gray-50">
+            <div class="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50">
                 <div class="flex items-center gap-2">
-                    <h2 class="text-xl font-black flex items-center gap-2">
-                        🏪 提示词仓库
-                        <span class="text-sm font-normal text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                    <h2 class="text-xl font-bold text-zinc-800 flex items-center gap-2">
+                        <Library class="w-6 h-6 text-teal-600" /> 提示词仓库
+                        <span class="text-xs font-medium text-zinc-500 bg-zinc-200 px-2 py-0.5 rounded-full">
                             {{ mode === 'text-to-image' ? '文生图' : '图文生图' }}
                         </span>
                     </h2>
                 </div>
                 <button 
                     @click="$emit('close')"
-                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors font-bold text-gray-500"
+                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 transition-colors text-zinc-500"
                 >
-                    ✕
+                    <X class="w-5 h-5" />
                 </button>
             </div>
 
             <!-- Category Filter -->
-            <div class="px-4 py-3 border-b border-gray-100 bg-white overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div class="px-4 py-3 border-b border-zinc-100 bg-white overflow-x-auto whitespace-nowrap scrollbar-hide">
                 <div class="flex gap-2">
                     <button
                         @click="selectedCategory = 'all'"
                         :class="[
-                            'px-4 py-1.5 rounded-full text-sm font-bold transition-all border-2',
+                            'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
                             selectedCategory === 'all'
-                                ? 'bg-black text-white border-black'
-                                : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+                                ? 'bg-teal-600 text-white shadow-md'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                         ]"
                     >
                         全部
@@ -38,10 +38,10 @@
                         :key="cat"
                         @click="selectedCategory = cat"
                         :class="[
-                            'px-4 py-1.5 rounded-full text-sm font-bold transition-all border-2',
+                            'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
                             selectedCategory === cat
-                                ? 'bg-yellow-400 text-black border-black'
-                                : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+                                ? 'bg-teal-600 text-white shadow-md'
+                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
                         ]"
                     >
                         {{ cat }}
@@ -50,19 +50,19 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <div class="flex-1 overflow-y-auto p-4 bg-zinc-50">
                 <div v-if="loading" class="flex flex-col items-center justify-center h-64 gap-4">
-                    <div class="w-12 h-12 border-4 border-yellow-400 border-t-black rounded-full animate-spin"></div>
-                    <p class="text-gray-500 font-bold">正在搬运仓库...</p>
+                    <div class="w-12 h-12 border-4 border-teal-500 border-t-teal-700 rounded-full animate-spin"></div>
+                    <p class="text-zinc-500 font-medium">正在搬运仓库...</p>
                 </div>
 
                 <div v-else-if="error" class="flex flex-col items-center justify-center h-64 gap-4">
                     <div class="text-4xl">😵</div>
-                    <p class="text-red-500 font-bold">{{ error }}</p>
-                    <button @click="fetchPrompts" class="text-blue-500 underline">重试</button>
+                    <p class="text-red-600 font-medium">{{ error }}</p>
+                    <button @click="fetchPrompts" class="text-teal-600 hover:text-teal-700 underline">重试</button>
                 </div>
 
-                <div v-else-if="filteredPrompts.length === 0" class="flex flex-col items-center justify-center h-64 text-gray-500">
+                <div v-else-if="filteredPrompts.length === 0" class="flex flex-col items-center justify-center h-64 text-zinc-500">
                     <div class="text-4xl mb-2">📭</div>
                     <p>该分类下暂无提示词</p>
                 </div>
@@ -71,21 +71,21 @@
                     <div 
                         v-for="item in filteredPrompts" 
                         :key="item.title"
-                        class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all group flex flex-col"
+                        class="bg-white rounded-neo border border-zinc-200 overflow-hidden hover:shadow-neo-float transition-all duration-300 group flex flex-col"
                     >
                         <!-- Image Preview -->
-                        <div class="aspect-square bg-gray-100 relative overflow-hidden">
+                        <div class="aspect-square bg-zinc-100 relative overflow-hidden">
                             <img 
                                 :src="item.preview" 
                                 :alt="item.title"
                                 loading="lazy"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                             />
                             <!-- Hover Overlay -->
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
                                 <button 
                                     @click="usePrompt(item)"
-                                    class="bg-white text-black px-4 py-2 rounded-full font-bold text-sm hover:bg-yellow-400 transition-colors transform translate-y-2 group-hover:translate-y-0 duration-300"
+                                    class="bg-white text-teal-700 px-5 py-2 rounded-full font-bold text-sm hover:bg-teal-600 hover:text-white transition-all transform translate-y-2 group-hover:translate-y-0 duration-300 shadow-lg"
                                 >
                                     立即使用
                                 </button>
@@ -95,22 +95,22 @@
                         <!-- Info -->
                         <div class="p-3 flex flex-col gap-2 flex-1">
                             <div class="flex justify-between items-start gap-2">
-                                <h3 class="font-bold text-gray-800 line-clamp-1" :title="item.title">{{ item.title }}</h3>
+                                <h3 class="font-bold text-zinc-800 line-clamp-1" :title="item.title">{{ item.title }}</h3>
                                 <button 
                                     @click="savePrompt(item)"
-                                    class="text-gray-400 hover:text-yellow-500 transition-colors"
+                                    class="text-zinc-400 hover:text-teal-500 transition-colors"
                                     title="收藏到预设库"
                                 >
-                                    ⭐
+                                    <Star class="w-4 h-4" />
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-500 line-clamp-2" :title="item.prompt">
+                            <p class="text-xs text-zinc-500 line-clamp-2" :title="item.prompt">
                                 {{ item.prompt }}
                             </p>
                             
                             <!-- Tags -->
                             <div class="mt-auto pt-2 flex gap-1 flex-wrap">
-                                <span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                                <span class="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-1 rounded-full border border-zinc-200">
                                     {{ item.category || '通用' }}
                                 </span>
                             </div>
@@ -124,6 +124,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { Library, X, Star } from 'lucide-vue-next'
 import type { StyleTemplate } from '../types'
 
 // Define the shape of the data from the JSON source

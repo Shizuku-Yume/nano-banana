@@ -1,0 +1,122 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Heart, Download, Trash2, RefreshCw } from 'lucide-vue-next'
+import type { GeneratedImage } from '../types'
+
+interface Props {
+  image?: GeneratedImage
+  status: 'pending' | 'generating' | 'success' | 'error'
+  aspectRatio: string
+  error?: string
+}
+
+const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  (e: 'click'): void
+  (e: 'favorite', id: number): void
+  (e: 'download', image: GeneratedImage): void
+  (e: 'delete', id: number): void
+  (e: 'iterate', image: GeneratedImage): void
+}>()
+
+const aspectRatioClass = computed(() => {
+  switch (props.aspectRatio) {
+    case '1:1': return 'aspect-square'
+    case '16:9': return 'aspect-video'
+    case '9:16': return 'aspect-[9/16]'
+    case '4:3': return 'aspect-[4/3]'
+    case '3:4': return 'aspect-[3/4]'
+    case '3:2': return 'aspect-[3/2]'
+    case '2:3': return 'aspect-[2/3]'
+    case '21:9': return 'aspect-[21/9]'
+    default: return 'aspect-square'
+  }
+})
+
+const handleFavorite = (e: Event) => {
+  e.stopPropagation()
+  if (props.image) emit('favorite', props.image.id)
+}
+
+const handleDownload = (e: Event) => {
+  e.stopPropagation()
+  if (props.image) emit('download', props.image)
+}
+
+const handleDelete = (e: Event) => {
+  e.stopPropagation()
+  if (props.image) emit('delete', props.image.id)
+}
+
+const handleIterate = (e: Event) => {
+  e.stopPropagation()
+  if (props.image) emit('iterate', props.image)
+}
+</script>
+
+<template>
+  <div 
+    class="relative group rounded-neo-lg overflow-hidden bg-zinc-100 shadow-neo-lift hover:shadow-neo-float hover:scale-[1.02] transition-all duration-300 ease-out cursor-pointer"
+    :class="aspectRatioClass"
+    @click="$emit('click')"
+  >
+    <div v-if="status === 'generating'" class="absolute inset-0 flex items-center justify-center bg-zinc-50 z-20">
+      <div class="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin"></div>
+    </div>
+
+    <div v-else-if="status === 'error'" class="absolute inset-0 flex flex-col items-center justify-center bg-red-50 p-4 z-20">
+      <span class="text-sm text-red-500 font-medium">Failed</span>
+      <span v-if="error" class="text-xs text-red-400 mt-1 text-center truncate w-full">{{ error }}</span>
+    </div>
+
+    <div v-else-if="status === 'success' && image" class="w-full h-full relative">
+      <img 
+        :src="image.url" 
+        :alt="image.prompt"
+        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        loading="lazy"
+      />
+
+      <div class="absolute top-0 left-0 right-0 p-2 flex justify-between items-start opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+        <span class="px-2 py-1 bg-black/50 backdrop-blur rounded text-[10px] font-mono text-white">
+          {{ aspectRatio }}
+        </span>
+        <button 
+          @click="handleFavorite"
+          class="p-1.5 rounded-full backdrop-blur transition-all duration-200 hover:scale-110 min-w-[32px] min-h-[32px] flex items-center justify-center"
+          :class="image.isFavorite ? 'bg-red-500/20 text-red-500' : 'bg-black/40 text-white hover:bg-white/20'"
+        >
+          <Heart :size="16" :class="{ 'fill-current': image.isFavorite }" />
+        </button>
+      </div>
+
+      <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 pt-8 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 flex items-end justify-between">
+        <div class="flex gap-2">
+          <button 
+            @click="handleIterate"
+            class="p-2 bg-white/20 backdrop-blur rounded-full text-white transition-all duration-200 hover:bg-brand hover:scale-110 min-w-[36px] min-h-[36px] flex items-center justify-center"
+            title="Use as reference"
+          >
+            <RefreshCw :size="16" />
+          </button>
+          <button 
+            @click="handleDownload"
+            class="p-2 bg-white/20 backdrop-blur rounded-full text-white transition-all duration-200 hover:bg-teal-500 hover:scale-110 min-w-[36px] min-h-[36px] flex items-center justify-center"
+            title="Download"
+          >
+            <Download :size="16" />
+          </button>
+        </div>
+        
+        <button 
+          @click="handleDelete"
+          class="p-2 bg-white/20 backdrop-blur rounded-full text-white transition-all duration-200 hover:bg-red-500 hover:scale-110 min-w-[36px] min-h-[36px] flex items-center justify-center"
+          title="Delete"
+        >
+          <Trash2 :size="16" />
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

@@ -1,272 +1,172 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-yellow-200 via-yellow-300 to-orange-200 text-gray-900 relative overflow-hidden">
-        <!-- 香蕉装饰元素 -->
-        <div class="absolute top-10 left-10 text-6xl opacity-20 animate-bounce">🍌</div>
-        <div class="absolute top-32 right-20 text-4xl opacity-30 animate-pulse">🍌</div>
-        <div class="absolute bottom-20 left-32 text-5xl opacity-25 animate-bounce delay-1000">🍌</div>
-        <div class="absolute bottom-40 right-10 text-3xl opacity-20 animate-pulse delay-500">🍌</div>
+    <div class="min-h-screen bg-zinc-50 text-zinc-900">
+        <AppHeader 
+            :active-tab="activeTab"
+            :is-connected="!!apiKey"
+            @update:active-tab="activeTab = $event"
+            @open-api-config="showApiConfig = true"
+        />
 
-        <div class="container mx-auto px-3 py-4 relative z-10">
-            <!-- Header -->
-            <div class="relative mb-6">
-                <div class="bg-gradient-to-r from-orange-400 to-yellow-500 rounded-lg p-6 border-4 border-black shadow-lg">
-                    <div class="text-center">
-                        <h1 class="text-4xl font-black text-white mb-1 flex items-center justify-center gap-2">
-                            🍌 Nano<br />
-                            <span class="text-yellow-100 text-5xl">Banana</span>
-                        </h1>
-                        <p class="text-white text-base font-medium">上传你的图片，我来创造艺术！</p>
+        <main class="pt-20 pb-48 px-4">
+            <div class="max-w-6xl mx-auto">
+                <div v-if="activeTab === 'create'">
+                    <GenerationTimeline 
+                        :batches="activeBatches"
+                        @open-lightbox="openLightbox"
+                        @toggle-favorite="handleToggleFavorite"
+                        @delete-image="handleDeleteImage"
+                        @reuse="handleReuse"
+                    />
+                    
+                    <div v-if="activeBatches.length === 0" class="text-center py-20">
+                        <div class="text-6xl mb-4">🍌</div>
+                        <h2 class="text-2xl font-bold text-zinc-700 mb-2">Nano Banana v2.0</h2>
+                        <p class="text-zinc-500">AI Image Generation Suite</p>
+                        <p class="text-zinc-400 text-sm mt-4">Use the command center below to start generating</p>
                     </div>
                 </div>
-            </div>
 
-            <!-- API设置区域 -->
-            <div class="mb-6">
-                <div class="flex justify-center">
-                    <button
-                        @click="showApiSettings = !showApiSettings"
-                        :class="[
-                            'px-6 py-3 rounded-lg border-4 border-black font-bold text-sm transition-all flex items-center gap-2 shadow-lg',
-                            apiKey ? 'bg-green-400 text-white hover:bg-green-500' : 'bg-red-400 text-white hover:bg-red-500 animate-pulse'
-                        ]"
-                    >
-                        <span>🔑</span>
-                        <span v-if="!apiKey">需要配置API密钥</span>
-                        <span v-else>API密钥已配置</span>
-                        <svg :class="['w-4 h-4 transition-transform', showApiSettings ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- API设置折叠面板 -->
-                <div v-if="showApiSettings" class="mt-4 max-w-2xl mx-auto">
-                    <ApiKeyInput
-                        v-model="apiKey"
-                        v-model:endpoint="apiEndpoint"
-                        v-model:model="selectedModel"
-                        :models="modelOptions"
-                        :model-loading="isFetchingModels"
-                        :model-error="modelsError"
-                        :providers="apiConfigs"
-                        :active-provider-id="activeProviderId"
-                        @fetch-models="handleFetchModels"
-                        @model-picked="handleModelPicked"
-                        @add-provider="handleAddProvider"
-                        @delete-provider="handleDeleteProvider"
-                        @switch-provider="handleSwitchProvider"
-                        @update-provider-name="handleUpdateProviderName"
+                <div v-else-if="activeTab === 'gallery'">
+                    <GalleryGrid 
+                        :images="galleryImages"
+                        :loading="isLoadingGallery"
+                        @open-lightbox="openLightbox"
+                        @toggle-favorite="handleToggleFavorite"
+                        @delete-image="handleDeleteImage"
+                        @load-more="loadMoreGallery"
                     />
                 </div>
-            </div>
 
-            <!-- Mode Switcher -->
-            <div class="flex justify-center mb-8">
-                <div class="bg-white/80 backdrop-blur-sm p-1.5 rounded-xl border-2 border-black shadow-lg inline-flex gap-2">
-                    <button
-                        @click="generationMode = 'image-to-image'"
-                        :class="[
-                            'px-6 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2',
-                            generationMode === 'image-to-image'
-                                ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white shadow-md transform scale-105'
-                                : 'text-gray-600 hover:bg-gray-100'
-                        ]"
-                    >
-                        🖼️ 图文生图
-                    </button>
-                    <button
-                        @click="generationMode = 'text-to-image'"
-                        :class="[
-                            'px-6 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2',
-                            generationMode === 'text-to-image'
-                                ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-md transform scale-105'
-                                : 'text-gray-600 hover:bg-gray-100'
-                        ]"
-                    >
-                        ✨ 文生图
-                    </button>
-                </div>
-            </div>
-
-            <!-- Main Content Area -->
-            <div class="flex flex-col gap-6">
-                
-                <!-- Image-to-Image Layout -->
-                <div v-if="generationMode === 'image-to-image'" class="grid lg:grid-cols-2 gap-6 items-start animate-fade-in">
-                    <!-- Left: Upload -->
-                    <div class="flex flex-col h-full">
-                        <div class="bg-pink-400 text-white font-bold px-4 py-2 rounded-t-lg border-4 border-black border-b-0 flex items-center gap-2">
-                            🍌 上传参考图
-                        </div>
-                        <div class="flex-1">
-                            <ImageUpload v-model="selectedImages" />
-                        </div>
-                    </div>
-
-                    <!-- Right: Prompt & Settings -->
-                    <div class="flex flex-col gap-6">
-                        <div class="flex flex-col h-full">
-                            <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold px-4 py-2 rounded-t-lg border-4 border-black border-b-0 flex items-center gap-2">
-                                🎨 提示词与风格
-                            </div>
-                            <div class="flex-1">
-                                <StylePromptSelector 
-                                    v-model:selectedStyle="selectedStyle" 
-                                    v-model:customPrompt="customPrompt" 
-                                    :templates="currentModeTemplates"
-                                    :user-templates="currentModeUserTemplates"
-                                    :mode="generationMode"
-                                    @save-template="handleSaveTemplate"
-                                    @delete-template="handleDeleteTemplate"
-                                    @import-templates="handleImportTemplates"
-                                    @open-warehouse="showWarehouse = true"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Settings (Conditional) -->
-                        <div v-if="showAspectRatioSelector || showGemini3ProConfig" class="flex flex-col gap-4">
-                            <div v-if="showAspectRatioSelector" class="bg-white rounded-lg border-4 border-black p-4 shadow-lg">
-                                <div class="font-bold mb-2 flex items-center gap-2">📐 图像设置</div>
-                                <AspectRatioSelector 
-                                    v-model="selectedAspectRatio" 
-                                    :model-type="showGemini3ProConfig ? 'gemini-3-pro-image' : 'default'" 
-                                    :image-size="gemini3ImageSize" 
-                                />
-                            </div>
-                            
-                            <div v-if="showGemini3ProConfig" class="bg-white rounded-lg border-4 border-black p-4 shadow-lg">
-                                <div class="font-bold mb-2 flex items-center gap-2">🚀 高级配置</div>
-                                <Gemini3ProConfig
-                                    v-model:imageSize="gemini3ImageSize"
-                                    v-model:enableGoogleSearch="gemini3EnableGoogleSearch"
-                                />
-                            </div>
-                        </div>
+                <div v-else-if="activeTab === 'favorites'">
+                    <GalleryGrid 
+                        :images="favoriteImages"
+                        :loading="isLoadingFavorites"
+                        @open-lightbox="openLightbox"
+                        @toggle-favorite="handleToggleFavorite"
+                        @delete-image="handleDeleteImage"
+                    />
+                    
+                    <div v-if="favoriteImages.length === 0 && !isLoadingFavorites" class="text-center py-20">
+                        <div class="text-5xl mb-4">❤️</div>
+                        <p class="text-zinc-500">No favorites yet</p>
                     </div>
                 </div>
-
-                <!-- Text-to-Image Layout -->
-                <div v-else class="max-w-4xl mx-auto w-full animate-fade-in">
-                    <div class="flex flex-col gap-6">
-                        <div class="flex flex-col h-full">
-                            <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold px-4 py-2 rounded-t-lg border-4 border-black border-b-0 flex items-center gap-2">
-                                ✨ 创意描述
-                            </div>
-                            <div class="flex-1">
-                                <StylePromptSelector 
-                                    v-model:selectedStyle="selectedStyle" 
-                                    v-model:customPrompt="customPrompt" 
-                                    :templates="currentModeTemplates"
-                                    :user-templates="currentModeUserTemplates"
-                                    :mode="generationMode"
-                                    @save-template="handleSaveTemplate"
-                                    @delete-template="handleDeleteTemplate"
-                                    @import-templates="handleImportTemplates"
-                                    @open-warehouse="showWarehouse = true"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Settings (Conditional) -->
-                        <div v-if="showAspectRatioSelector || showGemini3ProConfig" class="grid sm:grid-cols-2 gap-4">
-                            <div v-if="showAspectRatioSelector" class="bg-white rounded-lg border-4 border-black p-4 shadow-lg">
-                                <div class="font-bold mb-2 flex items-center gap-2">📐 图像设置</div>
-                                <AspectRatioSelector 
-                                    v-model="selectedAspectRatio" 
-                                    :model-type="showGemini3ProConfig ? 'gemini-3-pro-image' : 'default'" 
-                                    :image-size="gemini3ImageSize" 
-                                />
-                            </div>
-                            
-                            <div v-if="showGemini3ProConfig" class="bg-white rounded-lg border-4 border-black p-4 shadow-lg">
-                                <div class="font-bold mb-2 flex items-center gap-2">🚀 高级配置</div>
-                                <Gemini3ProConfig
-                                    v-model:imageSize="gemini3ImageSize"
-                                    v-model:enableGoogleSearch="gemini3EnableGoogleSearch"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Generate Button -->
-                <div class="flex justify-center mt-4 mb-12">
-                    <button
-                        @click="handleUnifiedGenerate"
-                        :disabled="!canUnifiedGenerate"
-                        :class="[
-                            'w-full md:w-auto md:min-w-[300px] px-8 py-4 rounded-xl font-black text-xl text-white transition-all duration-200 flex items-center justify-center gap-3 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px]',
-                            canUnifiedGenerate
-                                ? generationMode === 'image-to-image' 
-                                    ? 'bg-gradient-to-r from-green-400 to-blue-500 hover:brightness-110'
-                                    : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:brightness-110'
-                                : 'bg-gray-400 cursor-not-allowed shadow-none transform-none'
-                        ]"
-                    >
-                        <span v-if="!isLoading" class="flex items-center gap-2">
-                            {{ generationMode === 'image-to-image' ? '🍌 开始施法 (图生图)' : '✨ 开始施法 (文生图)' }}
-                        </span>
-                        <span v-else class="flex items-center gap-2">
-                            🍌 正在施法...
-                        </span>
-                        <div v-if="isLoading" class="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin ml-2" />
-                    </button>
-                </div>
             </div>
+        </main>
 
-            <!-- 生成结果区域：全宽 -->
-            <div class="w-full">
-                <div class="bg-black text-white font-bold px-4 py-2 rounded-t-lg border-4 border-black border-b-0 flex items-center gap-2">✨ 生成结果</div>
-                <ResultDisplay
-                    :result="result"
-                    :loading="isLoading"
-                    :error="error"
-                    :can-push="!!result"
-                    @download="handleDownloadResult"
-                    @push="handlePushDisplayResult"
+        <CommandCenter
+            :prompt="prompt"
+            :is-generating="isGenerating"
+            :show-settings="showSettings"
+            @update:prompt="prompt = $event"
+            @update:show-settings="showSettings = $event"
+            @generate="handleGenerate"
+        >
+            <template #settings>
+                <SettingsTray
+                    v-model:aspect-ratios="params.aspectRatios"
+                    v-model:resolution="params.resolution"
+                    v-model:count="params.count"
                 />
-            </div>
+            </template>
+            
+            <template #styles>
+                <StyleChips
+                    :presets="stylePresets"
+                    :selected-id="selectedStyleId"
+                    @select="selectedStyleId = $event"
+                    @create="showStyleModal = true"
+                />
+            </template>
+            
+            <template #references>
+                <ReferenceImages
+                    v-model="referenceImages"
+                    :max="4"
+                />
+            </template>
+        </CommandCenter>
 
-            <!-- Footer -->
-            <Footer />
+        <Lightbox
+            v-if="lightbox.isOpen"
+            :images="lightbox.images"
+            :current-index="lightbox.currentIndex"
+            :is-open="lightbox.isOpen"
+            @close="lightbox.isOpen = false"
+            @navigate="lightbox.currentIndex = $event"
+            @favorite="handleToggleFavorite"
+            @download="handleDownload"
+            @iterate="handleReuse"
+        />
 
-            <PromptWarehouse 
-                v-if="showWarehouse"
-                :mode="generationMode"
-                @close="showWarehouse = false"
-                @use-prompt="handleUseWarehousePrompt"
-                @save-prompt="handleSaveTemplate"
-            />
-        </div>
+        <ApiConfigModal
+            v-if="showApiConfig"
+            :providers="apiConfigs"
+            :active-provider-id="activeProviderId"
+            :models="modelOptions"
+            :is-loading-models="isFetchingModels"
+            @close="showApiConfig = false"
+            @add-provider="handleAddProvider"
+            @delete-provider="handleDeleteProvider"
+            @switch-provider="handleSwitchProvider"
+            @update-provider="handleUpdateProvider"
+            @fetch-models="handleFetchModels"
+        />
+
+        <StylePresetModal
+            v-if="showStyleModal"
+            @close="showStyleModal = false"
+            @save="handleSavePreset"
+        />
+
+        <Toast :toasts="toasts" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import ApiKeyInput from './components/ApiKeyInput.vue'
-import ImageUpload from './components/ImageUpload.vue'
-import StylePromptSelector from './components/StylePromptSelector.vue'
-import ResultDisplay from './components/ResultDisplay.vue'
-import Footer from './components/Footer.vue'
-import AspectRatioSelector from './components/AspectRatioSelector.vue'
-import Gemini3ProConfig from './components/Gemini3ProConfig.vue'
-import PromptWarehouse from './components/PromptWarehouse.vue'
+import { ref, computed, onMounted, shallowRef } from 'vue'
+import AppHeader from './components/AppHeader.vue'
+import CommandCenter from './components/CommandCenter.vue'
+import SettingsTray from './components/SettingsTray.vue'
+import StyleChips from './components/StyleChips.vue'
+import ReferenceImages from './components/ReferenceImages.vue'
+import GenerationTimeline from './components/GenerationTimeline.vue'
+import GalleryGrid from './components/GalleryGrid.vue'
+import Lightbox from './components/Lightbox.vue'
+import ApiConfigModal from './components/ApiConfigModal.vue'
+import StylePresetModal from './components/StylePresetModal.vue'
+import Toast from './components/ui/Toast.vue'
 import { fetchModels, generateImage } from './services/api'
-import { styleTemplates } from './data/templates'
+import { imageStorage, presetStorage } from './services/db'
 import { LocalStorage } from './utils/storage'
-import type { ApiModel, GenerateRequest, ModelOption, StyleTemplate, ApiProviderConfig } from './types'
+import { migrateV1ToV2 } from './utils/migration'
+import type { 
+    TabType, 
+    GenerationParams, 
+    GenerationTask, 
+    GeneratedImage, 
+    BatchInfo,
+    StylePreset,
+    ApiProviderConfig, 
+    ModelOption,
+    ToastItem,
+    LightboxState,
+    AspectRatio,
+    Resolution
+} from './types'
 import { DEFAULT_API_ENDPOINT, DEFAULT_MODEL_ID } from './config/api'
 
-// --- State: API Config ---
+const activeTab = ref<TabType>('create')
+const showSettings = ref(false)
+const showApiConfig = ref(false)
+const showStyleModal = ref(false)
+const toasts = ref<ToastItem[]>([])
+
 const apiConfigs = ref<ApiProviderConfig[]>([])
 const activeProviderId = ref('')
-const showApiSettings = ref(false)
-const isFetchingModels = ref(false)
-const modelsError = ref<string | null>(null)
 const modelOptions = ref<ModelOption[]>([])
+const isFetchingModels = ref(false)
 
-// Computed properties for active provider
 const activeProvider = computed(() => 
     apiConfigs.value.find(p => p.id === activeProviderId.value) || 
     { apiKey: '', endpoint: '', model: '', id: '', name: '' }
@@ -277,37 +177,35 @@ const apiKey = computed({
     set: (val) => updateActiveProvider({ apiKey: val })
 })
 
-const apiEndpoint = computed({
-    get: () => activeProvider.value.endpoint,
-    set: (val) => updateActiveProvider({ endpoint: val })
+const prompt = ref('')
+const referenceImages = ref<string[]>([])
+const selectedStyleId = ref<string | null>(null)
+const stylePresets = shallowRef<StylePreset[]>([])
+
+const params = ref<GenerationParams>({
+    aspectRatios: ['1:1'] as AspectRatio[],
+    resolution: '2K' as Resolution,
+    count: 1
 })
 
-const selectedModel = computed({
-    get: () => activeProvider.value.model,
-    set: (val) => updateActiveProvider({ model: val })
+const isGenerating = ref(false)
+const activeTasks = ref<GenerationTask[]>([])
+const activeBatches = ref<BatchInfo[]>([])
+
+const galleryImages = shallowRef<GeneratedImage[]>([])
+const favoriteImages = shallowRef<GeneratedImage[]>([])
+const isLoadingGallery = ref(false)
+const isLoadingFavorites = ref(false)
+
+const lightbox = ref<LightboxState>({
+    isOpen: false,
+    images: [],
+    currentIndex: 0
 })
 
-// --- State: Prompts & Styles ---
-const userTemplates = ref<StyleTemplate[]>([])
-const selectedStyle = ref('')
-const customPrompt = ref('')
-const showWarehouse = ref(false)
-const generationMode = ref<'image-to-image' | 'text-to-image'>('image-to-image')
-
-// --- State: Generation ---
-const selectedImages = ref<string[]>([])
-const isLoading = ref(false)
-const result = ref<string | null>(null)
-const error = ref<string | null>(null)
-
-// --- State: Model Specific ---
-const selectedAspectRatio = ref('1:1')
-const gemini3ImageSize = ref('2K')
-const gemini3EnableGoogleSearch = ref(false)
-
-// --- Lifecycle ---
-onMounted(() => {
-    // Load API Configs
+onMounted(async () => {
+    await migrateV1ToV2()
+    
     const configs = LocalStorage.getApiConfigs()
     if (configs.length > 0) {
         apiConfigs.value = configs
@@ -318,7 +216,6 @@ onMounted(() => {
             activeProviderId.value = configs[0].id
         }
     } else {
-        // Initialize with default if empty
         const defaultProvider: ApiProviderConfig = {
             id: crypto.randomUUID(),
             name: 'Default',
@@ -328,15 +225,14 @@ onMounted(() => {
         }
         apiConfigs.value = [defaultProvider]
         activeProviderId.value = defaultProvider.id
-        LocalStorage.saveApiConfigs(apiConfigs.value)
-        LocalStorage.saveActiveProviderId(activeProviderId.value)
+        saveApiConfigs()
     }
 
-    // Load User Templates
-    userTemplates.value = LocalStorage.getCustomPrompts()
+    stylePresets.value = await presetStorage.getAll()
+    await loadGallery()
+    await loadFavorites()
 })
 
-// --- API Config Management ---
 const saveApiConfigs = () => {
     LocalStorage.saveApiConfigs(apiConfigs.value)
     LocalStorage.saveActiveProviderId(activeProviderId.value)
@@ -377,219 +273,235 @@ const handleSwitchProvider = (id: string) => {
     saveApiConfigs()
 }
 
-const handleUpdateProviderName = (id: string, name: string) => {
+const handleUpdateProvider = (id: string, updates: Partial<ApiProviderConfig>) => {
     const provider = apiConfigs.value.find(p => p.id === id)
     if (provider) {
-        provider.name = name
+        Object.assign(provider, updates)
         saveApiConfigs()
     }
 }
 
-// --- Model Methods ---
 const handleFetchModels = async () => {
-    if (!apiKey.value || !apiEndpoint.value) return
+    if (!apiKey.value || !activeProvider.value.endpoint) return
     
     isFetchingModels.value = true
-    modelsError.value = null
-    
     try {
-        // Check cache first
-        const cached = LocalStorage.getModelCache(apiEndpoint.value)
+        const cached = LocalStorage.getModelCache(activeProvider.value.endpoint)
         if (cached.length > 0) {
             modelOptions.value = cached
         }
 
-        const models = await fetchModels(apiEndpoint.value, apiKey.value)
-        modelOptions.value = models.map(m => {
-            const id = m.id.toLowerCase()
-            const name = (m.name || '').toLowerCase()
-            // Keywords that strongly suggest image generation capability
-            const imageKeywords = ['image', 'diffusion', 'flux', 'dall-e', 'midjourney', 'recraft', 'ideogram', 'paint', 'draw', 'picture', 'art']
-            // Exclude common false positives (e.g. "vision" usually means input, "embedding" is for embeddings)
-            const isImageModel = imageKeywords.some(k => id.includes(k) || name.includes(k)) && !id.includes('embedding')
-            
-            return {
-                id: m.id,
-                label: m.name || m.id.split('/').pop() || m.id,
-                description: m.description,
-                supportsImages: isImageModel
-            }
-        })
-        LocalStorage.saveModelCache(apiEndpoint.value, modelOptions.value)
+        const models = await fetchModels(activeProvider.value.endpoint, apiKey.value)
+        modelOptions.value = models.map(m => ({
+            id: m.id,
+            label: m.name || m.id.split('/').pop() || m.id,
+            description: m.description,
+            supportsImages: m.id.toLowerCase().includes('image')
+        }))
+        LocalStorage.saveModelCache(activeProvider.value.endpoint, modelOptions.value)
     } catch (err) {
-        modelsError.value = err instanceof Error ? err.message : '获取模型列表失败'
+        addToast('error', err instanceof Error ? err.message : 'Failed to fetch models')
     } finally {
         isFetchingModels.value = false
     }
 }
 
-const handleModelPicked = () => {
-    // Optional: Auto-save or other logic
-}
+const MAX_CONCURRENT = 3
 
-// --- Custom Prompts Methods ---
-const handleSaveTemplate = (template: StyleTemplate) => {
-    userTemplates.value.push(template)
-    LocalStorage.saveCustomPrompts(userTemplates.value)
-    selectedStyle.value = template.id
-}
-
-const handleDeleteTemplate = (id: string) => {
-    userTemplates.value = userTemplates.value.filter(t => t.id !== id)
-    LocalStorage.saveCustomPrompts(userTemplates.value)
-    if (selectedStyle.value === id) {
-        selectedStyle.value = ''
+const handleGenerate = async () => {
+    if (!prompt.value.trim()) {
+        addToast('warning', 'Please enter a prompt to generate images')
+        return
     }
-}
-
-const handleImportTemplates = (templates: StyleTemplate[]) => {
-    // Filter out duplicates based on ID
-    const newTemplates = templates.filter(t => !userTemplates.value.some(ut => ut.id === t.id))
-    userTemplates.value = [...userTemplates.value, ...newTemplates]
-    LocalStorage.saveCustomPrompts(userTemplates.value)
-    alert(`成功导入 ${newTemplates.length} 个预设`)
-}
-
-const handleUseWarehousePrompt = (prompt: string) => {
-    customPrompt.value = prompt
-    showWarehouse.value = false
-}
-
-// --- Methods: Generation ---
-const pushImageToUpload = (image: string | null) => {
-    if (!image) return
-    const filtered = selectedImages.value.filter(existing => existing !== image)
-    selectedImages.value = [image, ...filtered]
-}
-
-const canUnifiedGenerate = computed(() => {
-    const basicChecks = apiKey.value.trim() && 
-                       apiEndpoint.value.trim() && 
-                       selectedModel.value.trim() && 
-                       (selectedStyle.value || customPrompt.value.trim()) &&
-                       !isLoading.value
-
-    if (generationMode.value === 'image-to-image') {
-        return basicChecks && selectedImages.value.length > 0
-    } else {
-        return basicChecks
+    
+    if (!apiKey.value) {
+        addToast('warning', 'Please configure your API key first')
+        showApiConfig.value = true
+        return
     }
-})
-
-const showAspectRatioSelector = computed(() => {
-    const modelId = selectedModel.value.toLowerCase().trim()
-    if (!modelId) return false
-
-    const segments = modelId.split('/')
-    const normalizedId = segments[segments.length - 1]
-    return normalizedId === 'gemini-2.5-flash-image' ||
-           normalizedId === 'gemini-2.5-flash-image-preview' ||
-           modelId.includes('gemini-3-pro-image')
-})
-
-const showGemini3ProConfig = computed(() => {
-    const modelId = selectedModel.value.toLowerCase().trim()
-    if (!modelId) return false
-    return modelId.includes('gemini-3-pro-image')
-})
-
-const currentModeTemplates = computed(() => {
-    return styleTemplates.filter(t => {
-        if (generationMode.value === 'text-to-image') {
-            return t.mode === 'text-to-image'
-        } else {
-            // Default to image-to-image or undefined (legacy)
-            return t.mode === 'image-to-image' || !t.mode
+    
+    if (isGenerating.value) return
+    
+    isGenerating.value = true
+    const batchId = crypto.randomUUID()
+    const tasks: GenerationTask[] = []
+    
+    for (const ratio of params.value.aspectRatios) {
+        for (let i = 0; i < params.value.count; i++) {
+            tasks.push({
+                id: crypto.randomUUID(),
+                batchId,
+                status: 'pending',
+                aspectRatio: ratio,
+                prompt: prompt.value,
+                referenceImages: referenceImages.value.length > 0 ? [...referenceImages.value] : undefined,
+                styleId: selectedStyleId.value || undefined,
+                resolution: params.value.resolution,
+                createdAt: Date.now()
+            })
         }
-    })
-})
-
-const currentModeUserTemplates = computed(() => {
-    return userTemplates.value.filter(t => {
-        if (generationMode.value === 'text-to-image') {
-            return t.mode === 'text-to-image'
-        } else {
-            // Default to image-to-image or undefined (legacy)
-            return t.mode === 'image-to-image' || !t.mode
-        }
-    })
-})
-
-const handleUnifiedGenerate = async () => {
-    if (!canUnifiedGenerate.value) return
-
-    isLoading.value = true
-    error.value = null
-    result.value = null
-
+    }
+    
+    const batchInfo: BatchInfo = {
+        batchId,
+        prompt: prompt.value,
+        styleId: selectedStyleId.value || undefined,
+        referenceImages: referenceImages.value.length > 0 ? [...referenceImages.value] : undefined,
+        createdAt: Date.now(),
+        tasks
+    }
+    
+    activeBatches.value = [batchInfo, ...activeBatches.value]
+    activeTasks.value.push(...tasks)
+    
     try {
-        // Use selected style prompt or custom prompt
-        const allTemplates = [...styleTemplates, ...userTemplates.value]
-        const prompt = selectedStyle.value ? allTemplates.find(t => t.id === selectedStyle.value)?.prompt || customPrompt.value : customPrompt.value
-
-        const request: GenerateRequest = {
-            prompt,
-            images: generationMode.value === 'image-to-image' ? selectedImages.value : [],
-            apikey: apiKey.value,
-            endpoint: apiEndpoint.value.trim() || DEFAULT_API_ENDPOINT,
-            model: selectedModel.value.trim() || DEFAULT_MODEL_ID
-        }
-
-        if (showAspectRatioSelector.value) {
-            request.aspectRatio = selectedAspectRatio.value
-        }
-
-        if (showGemini3ProConfig.value) {
-            request.imageSize = gemini3ImageSize.value
-            request.enableGoogleSearch = gemini3EnableGoogleSearch.value
-        }
-
-        const response = await generateImage(request)
-        result.value = response.imageUrl
+        await processQueue(tasks, MAX_CONCURRENT)
     } catch (err) {
-        error.value = err instanceof Error ? err.message : '生成失败'
-        result.value = null
+        addToast('error', 'Generation queue failed unexpectedly')
+        console.error('Queue processing error:', err)
     } finally {
-        isLoading.value = false
+        isGenerating.value = false
+        await loadGallery()
     }
 }
 
-const handlePushDisplayResult = () => {
-    pushImageToUpload(result.value)
+async function processQueue(tasks: GenerationTask[], concurrency: number) {
+    const executing: Promise<void>[] = []
+    
+    for (const task of tasks) {
+        const promise = executeTask(task).then(() => {
+            executing.splice(executing.indexOf(promise), 1)
+        })
+        executing.push(promise)
+        
+        if (executing.length >= concurrency) {
+            await Promise.race(executing)
+        }
+    }
+    
+    await Promise.all(executing)
 }
 
-const handleDownloadResult = async () => {
-    const image = result.value
-    if (!image) return
-    if (typeof window === 'undefined') return
-
-    let downloadUrl = image
-    let revokeUrl: string | null = null
-
+async function executeTask(task: GenerationTask) {
+    task.status = 'generating'
     try {
-        if (!image.startsWith('data:')) {
-            const response = await fetch(image)
-            const blob = await response.blob()
-            downloadUrl = URL.createObjectURL(blob)
-            revokeUrl = downloadUrl
+        const result = await generateImage({
+            prompt: task.prompt,
+            images: task.referenceImages || [],
+            apikey: apiKey.value,
+            endpoint: activeProvider.value.endpoint,
+            model: activeProvider.value.model,
+            aspectRatio: task.aspectRatio
+        })
+        
+        const image: Omit<GeneratedImage, 'id'> = {
+            batchId: task.batchId,
+            url: result.imageUrl,
+            prompt: task.prompt,
+            aspectRatio: task.aspectRatio,
+            resolution: task.resolution,
+            timestamp: Date.now(),
+            styleId: task.styleId,
+            referenceImages: task.referenceImages,
+            isFavorite: false
         }
-
-        const link = document.createElement('a')
-        const dataMatch = image.match(/^data:image\/([a-zA-Z0-9+]+);/)
-        const extension = dataMatch ? dataMatch[1] : 'png'
-
-        link.href = downloadUrl
-        link.download = `nano-banana-${Date.now()}.${extension}`
-        link.rel = 'noopener'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
-        if (revokeUrl) {
-            URL.revokeObjectURL(revokeUrl)
+        
+        const id = await imageStorage.addImage(image)
+        task.data = { ...image, id }
+        task.status = 'success'
+    } catch (err) {
+        let errorMessage = 'Generation failed'
+        if (err instanceof Error) {
+            if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                errorMessage = 'Network error - check your connection'
+            } else if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+                errorMessage = 'Invalid API key'
+            } else if (err.message.includes('429') || err.message.includes('rate')) {
+                errorMessage = 'Rate limited - please wait'
+            } else {
+                errorMessage = err.message
+            }
         }
-    } catch (downloadError) {
-        window.open(image, '_blank', 'noopener')
+        task.error = errorMessage
+        task.status = 'error'
+        addToast('error', `Failed: ${errorMessage}`)
     }
+}
+
+const loadGallery = async () => {
+    isLoadingGallery.value = true
+    try {
+        galleryImages.value = await imageStorage.getRecent(50, 0)
+    } finally {
+        isLoadingGallery.value = false
+    }
+}
+
+const loadMoreGallery = async () => {
+    const more = await imageStorage.getRecent(50, galleryImages.value.length)
+    galleryImages.value = [...galleryImages.value, ...more]
+}
+
+const loadFavorites = async () => {
+    isLoadingFavorites.value = true
+    try {
+        favoriteImages.value = await imageStorage.getFavorites()
+    } finally {
+        isLoadingFavorites.value = false
+    }
+}
+
+const handleToggleFavorite = async (id: number) => {
+    await imageStorage.toggleFavorite(id)
+    await loadGallery()
+    await loadFavorites()
+}
+
+const handleDeleteImage = async (id: number) => {
+    await imageStorage.deleteImage(id)
+    await loadGallery()
+    await loadFavorites()
+}
+
+const openLightbox = (images: GeneratedImage[], index: number) => {
+    lightbox.value = {
+        isOpen: true,
+        images,
+        currentIndex: index
+    }
+}
+
+const handleDownload = async (image: GeneratedImage) => {
+    const link = document.createElement('a')
+    link.href = image.url
+    link.download = `nano-banana-${image.id}-${Date.now()}.png`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+}
+
+const handleReuse = (image: GeneratedImage) => {
+    prompt.value = image.prompt
+    if (image.referenceImages) {
+        referenceImages.value = [...image.referenceImages]
+    }
+    selectedStyleId.value = image.styleId || null
+    activeTab.value = 'create'
+    lightbox.value.isOpen = false
+}
+
+const handleSavePreset = async (preset: Omit<StylePreset, 'id'>) => {
+    await presetStorage.addPreset(preset)
+    stylePresets.value = await presetStorage.getAll()
+    showStyleModal.value = false
+    addToast('success', 'Style preset saved')
+}
+
+const addToast = (type: ToastItem['type'], message: string) => {
+    const id = crypto.randomUUID()
+    toasts.value.push({ id, type, message, duration: 3000 })
+    setTimeout(() => {
+        toasts.value = toasts.value.filter(t => t.id !== id)
+    }, 3000)
 }
 </script>
