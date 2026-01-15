@@ -76,6 +76,7 @@
                     :selected-id="selectedStyleId"
                     @select="selectedStyleId = $event"
                     @create="showStyleModal = true"
+                    @open-warehouse="showPromptWarehouse = true"
                 />
             </template>
             
@@ -119,6 +120,14 @@
             @save="handleSavePreset"
         />
 
+        <PromptWarehouse
+            v-if="showPromptWarehouse"
+            mode="text-to-image"
+            @close="showPromptWarehouse = false"
+            @use-prompt="handleUseWarehousePrompt"
+            @save-prompt="handleSaveWarehousePrompt"
+        />
+
         <Toast :toasts="toasts" />
     </div>
 </template>
@@ -135,6 +144,7 @@ import GalleryGrid from './components/GalleryGrid.vue'
 import Lightbox from './components/Lightbox.vue'
 import ApiConfigModal from './components/ApiConfigModal.vue'
 import StylePresetModal from './components/StylePresetModal.vue'
+import PromptWarehouse from './components/PromptWarehouse.vue'
 import Toast from './components/ui/Toast.vue'
 import { fetchModels, generateImage } from './services/api'
 import { imageStorage, presetStorage } from './services/db'
@@ -147,6 +157,7 @@ import type {
     GeneratedImage, 
     BatchInfo,
     StylePreset,
+    StyleTemplate,
     ApiProviderConfig, 
     ModelOption,
     ToastItem,
@@ -160,6 +171,7 @@ const activeTab = ref<TabType>('create')
 const showSettings = ref(false)
 const showApiConfig = ref(false)
 const showStyleModal = ref(false)
+const showPromptWarehouse = ref(false)
 const toasts = ref<ToastItem[]>([])
 
 const apiConfigs = ref<ApiProviderConfig[]>([])
@@ -495,6 +507,22 @@ const handleSavePreset = async (preset: Omit<StylePreset, 'id'>) => {
     stylePresets.value = await presetStorage.getAll()
     showStyleModal.value = false
     addToast('success', 'Style preset saved')
+}
+
+const handleUseWarehousePrompt = (warehousePrompt: string) => {
+    prompt.value = warehousePrompt
+    showPromptWarehouse.value = false
+    addToast('success', 'Prompt loaded')
+}
+
+const handleSaveWarehousePrompt = async (template: StyleTemplate) => {
+    const preset: Omit<StylePreset, 'id'> = {
+        name: template.title,
+        description: template.prompt
+    }
+    await presetStorage.addPreset(preset)
+    stylePresets.value = await presetStorage.getAll()
+    addToast('success', `"${template.title}" saved to presets`)
 }
 
 const addToast = (type: ToastItem['type'], message: string) => {

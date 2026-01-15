@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, computed } from 'vue'
 import { X } from 'lucide-vue-next'
 
 const props = withDefaults(defineProps<{
-  open: boolean
+  open?: boolean
+  show?: boolean
   title?: string
+  width?: string
   closable?: boolean
 }>(), {
   closable: true
 })
+
+const isOpen = computed(() => props.open || props.show)
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -21,7 +25,7 @@ const handleClose = () => {
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && props.open) {
+  if (e.key === 'Escape' && isOpen.value) {
     handleClose()
   }
 }
@@ -38,12 +42,13 @@ onUnmounted(() => {
 <template>
   <Teleport to="body">
     <div
-      v-if="open"
+      v-if="isOpen"
       class="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/50 backdrop-blur-sm animate-fade-in"
       @click="handleClose"
     >
       <div
-        class="relative max-w-lg w-full mx-4 bg-white rounded-neo-lg shadow-2xl p-6"
+        class="relative w-full mx-4 bg-white rounded-neo-lg shadow-2xl p-6"
+        :class="width || 'max-w-lg'"
         @click.stop
       >
         <div class="flex items-center justify-between mb-4">

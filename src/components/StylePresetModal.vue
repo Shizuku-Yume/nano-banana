@@ -55,7 +55,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <Modal :title="preset ? 'Edit Style Preset' : 'New Style Preset'" @close="$emit('close')">
+  <Modal :open="true" :title="preset ? 'Edit Style Preset' : 'New Style Preset'" @close="$emit('close')">
 
     <div class="space-y-6 max-h-[70vh] overflow-y-auto px-1 -mx-1 animate-scale-in">
       <div class="space-y-2">
