@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { BookMarked, Plus, Library, X, ChevronDown } from 'lucide-vue-next'
+import { BookMarked, Plus, Library, X, ChevronDown, Pencil, Trash2 } from 'lucide-vue-next'
 import type { StylePreset } from '../types'
 
 const props = defineProps<{
@@ -10,6 +10,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [id: string | null]
+  apply: [preset: StylePreset]
+  edit: [preset: StylePreset]
+  delete: [id: number]
   create: []
   openWarehouse: []
 }>()
@@ -25,9 +28,28 @@ const togglePopover = () => {
   isOpen.value = !isOpen.value
 }
 
-const selectPreset = (id: string | null) => {
-  emit('select', id)
+const handleSelectPreset = (preset: StylePreset) => {
+  emit('select', String(preset.id))
+  emit('apply', preset)
   isOpen.value = false
+}
+
+const handleClearSelection = () => {
+  emit('select', null)
+  isOpen.value = false
+}
+
+const handleEdit = (e: Event, preset: StylePreset) => {
+  e.stopPropagation()
+  emit('edit', preset)
+  isOpen.value = false
+}
+
+const handleDelete = (e: Event, id: number) => {
+  e.stopPropagation()
+  if (confirm('Delete this preset?')) {
+    emit('delete', id)
+  }
 }
 
 const handleCreate = () => {
@@ -74,7 +96,7 @@ const handleOpenWarehouse = () => {
     >
       <div
         v-if="isOpen"
-        class="absolute bottom-full left-0 mb-2 w-72 bg-white rounded-neo-lg shadow-neo-lift border border-zinc-200 overflow-hidden z-50"
+        class="absolute bottom-full left-0 mb-2 w-80 bg-white rounded-neo-lg shadow-neo-lift border border-zinc-200 overflow-hidden z-50"
       >
         <!-- Header -->
         <div class="p-3 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
@@ -91,7 +113,7 @@ const handleOpenWarehouse = () => {
         <div class="max-h-64 overflow-y-auto p-2">
           <!-- None Option -->
           <button
-            @click="selectPreset(null)"
+            @click="handleClearSelection"
             class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-3"
             :class="[
               !selectedId 
@@ -106,34 +128,60 @@ const handleOpenWarehouse = () => {
           </button>
 
           <!-- Presets -->
-          <button
+          <div
             v-for="preset in presets"
             :key="preset.id"
-            @click="selectPreset(String(preset.id))"
-            class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-3 mt-1"
+            class="mt-1 rounded-lg transition-colors group"
             :class="[
               String(preset.id) === selectedId 
-                ? 'bg-teal-50 text-teal-700' 
-                : 'hover:bg-zinc-100 text-zinc-600'
+                ? 'bg-teal-50' 
+                : 'hover:bg-zinc-100'
             ]"
           >
-            <!-- Thumbnail or placeholder -->
-            <div class="w-8 h-8 rounded overflow-hidden flex-shrink-0">
-              <img 
-                v-if="preset.referenceImages?.[0]"
-                :src="preset.referenceImages[0]"
-                alt=""
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="w-full h-full bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center">
-                <BookMarked class="w-3 h-3 text-teal-500" />
+            <div class="flex items-center gap-3 px-3 py-2">
+              <!-- Click to apply -->
+              <button
+                @click="handleSelectPreset(preset)"
+                class="flex items-center gap-3 flex-1 min-w-0 text-left"
+                :class="String(preset.id) === selectedId ? 'text-teal-700' : 'text-zinc-600'"
+              >
+                <!-- Thumbnail or placeholder -->
+                <div class="w-8 h-8 rounded overflow-hidden flex-shrink-0">
+                  <img 
+                    v-if="preset.referenceImages?.[0]"
+                    :src="preset.referenceImages[0]"
+                    alt=""
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="w-full h-full bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center">
+                    <BookMarked class="w-3 h-3 text-teal-500" />
+                  </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-medium text-sm truncate">{{ preset.name }}</p>
+                  <p v-if="preset.description" class="text-xs text-zinc-400 truncate">{{ preset.description }}</p>
+                </div>
+              </button>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  @click="handleEdit($event, preset)"
+                  class="p-1.5 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
+                  title="Edit"
+                >
+                  <Pencil class="w-3.5 h-3.5" />
+                </button>
+                <button
+                  @click="handleDelete($event, preset.id!)"
+                  class="p-1.5 rounded hover:bg-red-100 text-zinc-400 hover:text-red-600"
+                  title="Delete"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-medium truncate">{{ preset.name }}</p>
-              <p v-if="preset.description" class="text-xs text-zinc-400 truncate">{{ preset.description }}</p>
-            </div>
-          </button>
+          </div>
 
           <!-- Empty State -->
           <div v-if="presets.length === 0" class="py-6 text-center text-zinc-400">

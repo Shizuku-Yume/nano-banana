@@ -75,7 +75,10 @@
                     :presets="stylePresets"
                     :selected-id="selectedStyleId"
                     @select="selectedStyleId = $event"
-                    @create="showStyleModal = true"
+                    @apply="handleApplyPreset"
+                    @edit="handleEditPreset"
+                    @delete="handleDeletePreset"
+                    @create="editingPreset = null; showStyleModal = true"
                     @open-warehouse="showPromptWarehouse = true"
                 />
             </template>
@@ -116,8 +119,10 @@
 
         <StylePresetModal
             v-if="showStyleModal"
-            @close="showStyleModal = false"
+            :preset="editingPreset"
+            @close="showStyleModal = false; editingPreset = null"
             @save="handleSavePreset"
+            @delete="handleDeletePreset"
         />
 
         <PromptWarehouse
@@ -192,6 +197,7 @@ const prompt = ref('')
 const referenceImages = ref<string[]>([])
 const selectedStyleId = ref<string | null>(null)
 const stylePresets = shallowRef<StylePreset[]>([])
+const editingPreset = ref<StylePreset | null>(null)
 
 const params = ref<GenerationParams>({
     aspectRatios: ['1:1'] as AspectRatio[],
@@ -502,10 +508,40 @@ const handleReuse = (image: GeneratedImage) => {
 }
 
 const handleSavePreset = async (preset: Omit<StylePreset, 'id'>) => {
-    await presetStorage.addPreset(preset)
+    if (editingPreset.value?.id) {
+        await presetStorage.update(editingPreset.value.id, preset)
+        addToast('success', 'Preset updated')
+    } else {
+        await presetStorage.addPreset(preset)
+        addToast('success', 'Preset saved')
+    }
     stylePresets.value = await presetStorage.getAll()
     showStyleModal.value = false
-    addToast('success', 'Style preset saved')
+    editingPreset.value = null
+}
+
+const handleApplyPreset = (preset: StylePreset) => {
+    if (preset.description) {
+        prompt.value = preset.description + (prompt.value ? '\n' + prompt.value : '')
+    }
+    if (preset.referenceImages?.length) {
+        referenceImages.value = [...preset.referenceImages, ...referenceImages.value].slice(0, 4)
+    }
+    addToast('success', `Applied "${preset.name}"`)
+}
+
+const handleEditPreset = (preset: StylePreset) => {
+    editingPreset.value = preset
+    showStyleModal.value = true
+}
+
+const handleDeletePreset = async (id: number) => {
+    await presetStorage.delete(id)
+    stylePresets.value = await presetStorage.getAll()
+    if (selectedStyleId.value === String(id)) {
+        selectedStyleId.value = null
+    }
+    addToast('success', 'Preset deleted')
 }
 
 const handleUseWarehousePrompt = (warehousePrompt: string) => {

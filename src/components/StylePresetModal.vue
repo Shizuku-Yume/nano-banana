@@ -50,8 +50,9 @@ const handleSave = () => {
 }
 
 const handleDelete = () => {
-  if (props.preset?.id) {
+  if (props.preset?.id && confirm('Delete this preset?')) {
     emit('delete', props.preset.id)
+    emit('close')
   }
 }
 
