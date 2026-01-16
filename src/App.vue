@@ -311,7 +311,7 @@ const handleFetchModels = async () => {
         const models = await fetchModels(activeProvider.value.endpoint, apiKey.value)
         modelOptions.value = models.map(m => ({
             id: m.id,
-            label: m.name || m.id.split('/').pop() || m.id,
+            label: m.name?.trim() ? `${m.id} - ${m.name.trim()}` : m.id,
             description: m.description,
             supportsImages: m.id.toLowerCase().includes('image')
         }))
@@ -411,9 +411,14 @@ async function executeTask(task: GenerationTask) {
             aspectRatio: task.aspectRatio
         })
         
+        const imageUrl = result.imageUrls[0]
+        if (!imageUrl) {
+            throw new Error('No image returned from API')
+        }
+        
         const image: Omit<GeneratedImage, 'id'> = {
             batchId: task.batchId,
-            url: result.imageUrl,
+            url: imageUrl,
             prompt: task.prompt,
             aspectRatio: task.aspectRatio,
             resolution: task.resolution,

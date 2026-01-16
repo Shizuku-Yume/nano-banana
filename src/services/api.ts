@@ -140,7 +140,6 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
             payload.stream = true
 
             let data: any
-            let isStreamResponse = false
 
             const response = await fetch(apiEndpoint, {
                 method: 'POST',
@@ -156,11 +155,9 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
                 throw new Error(`API error ${response.status}: ${errorText}`)
             }
 
-            // 检查响应类型是否为流式
             const contentType = response.headers.get('content-type') || ''
             if (contentType.includes('text/event-stream') || contentType.includes('application/x-ndjson')) {
                 console.log('使用流式模式解析响应')
-                isStreamResponse = true
                 data = await parseSSEResponse(response)
 
                 if (!data) {
@@ -178,37 +175,47 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
             }
 
             const message = data.choices[0].message
-            let imageUrl: string | null = null
+            const imageUrls: string[] = []
 
-            // 检查是否返回图片
-            if (message.images?.[0]?.image_url?.url) {
-                imageUrl = message.images[0].image_url.url
+            // 检查是否返回图片 (OpenAI/OpenRouter 格式：images 数组)
+            if (Array.isArray(message.images)) {
+                for (const img of message.images) {
+                    if (img?.image_url?.url) {
+                        imageUrls.push(img.image_url.url)
+                    }
+                }
             }
 
-            // 检查content是否是base64图片（直接返回）
-            if (!imageUrl && typeof message.content === 'string' && message.content.startsWith('data:image/')) {
-                imageUrl = message.content
+            // 检查content是否是base64图片（直接返回，可能包含多张）
+            if (typeof message.content === 'string' && message.content.startsWith('data:image/')) {
+                // 可能是多张 base64 图片，用正则提取
+                const base64Matches = message.content.match(/data:image\/[a-zA-Z0-9+]+;base64,[^\s"]+/g)
+                if (base64Matches) {
+                    imageUrls.push(...base64Matches)
+                } else {
+                    imageUrls.push(message.content)
+                }
             }
 
             // 检查content是否包含markdown格式的base64图片 ![image](data:image/...)
-            if (!imageUrl && typeof message.content === 'string') {
-                const markdownImageMatch = message.content.match(/!\[.*?\]\((data:image\/[^)]+)\)/)
-                if (markdownImageMatch) {
-                    imageUrl = markdownImageMatch[1]
+            if (imageUrls.length === 0 && typeof message.content === 'string') {
+                const markdownImageMatches = message.content.matchAll(/!\[.*?\]\((data:image\/[^)]+)\)/g)
+                for (const match of markdownImageMatches) {
+                    imageUrls.push(match[1])
                 }
             }
 
             // 检查content是否包含纯文本中的base64图片 data:image/...
-            if (!imageUrl && typeof message.content === 'string') {
-                const base64Match = message.content.match(/(data:image\/[a-zA-Z0-9+/;,=]+)/)
-                if (base64Match) {
-                    imageUrl = base64Match[1]
+            if (imageUrls.length === 0 && typeof message.content === 'string') {
+                const base64Matches = message.content.match(/(data:image\/[a-zA-Z0-9+/;,=]+)/g)
+                if (base64Matches) {
+                    imageUrls.push(...base64Matches)
                 }
             }
 
-            if (imageUrl) {
-                console.log(`成功生成图片 (第 ${attempt} 次尝试)`)
-                return { imageUrl }
+            if (imageUrls.length > 0) {
+                console.log(`成功生成 ${imageUrls.length} 张图片 (第 ${attempt} 次尝试)`)
+                return { imageUrls }
             }
 
             // 如果是文本回复或空回复，输出到控制台并判断是否需要重试

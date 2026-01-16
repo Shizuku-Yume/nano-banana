@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { Heart, Download, Trash2, RefreshCw } from 'lucide-vue-next'
 import type { GeneratedImage } from '../types'
 
@@ -19,6 +19,15 @@ const emit = defineEmits<{
   (e: 'delete', id: number): void
   (e: 'iterate', image: GeneratedImage): void
 }>()
+
+const imageSize = ref('')
+
+const onImageLoad = (event: Event) => {
+  const img = event.currentTarget as HTMLImageElement | null
+  if (img?.naturalWidth && img.naturalHeight) {
+    imageSize.value = `${img.naturalWidth} × ${img.naturalHeight}`
+  }
+}
 
 const aspectRatioClass = computed(() => {
   switch (props.aspectRatio) {
@@ -76,12 +85,18 @@ const handleIterate = (e: Event) => {
         :alt="image.prompt"
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
+        @load="onImageLoad"
       />
 
       <div class="absolute top-0 left-0 right-0 p-2 flex justify-between items-start opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-        <span class="px-2 py-1 bg-black/50 backdrop-blur rounded text-[10px] font-mono text-white">
-          {{ aspectRatio }}
-        </span>
+        <div class="flex flex-col gap-1">
+          <span class="px-2 py-1 bg-black/50 backdrop-blur rounded text-[10px] font-mono text-white">
+            {{ aspectRatio }}
+          </span>
+          <span v-if="imageSize" class="px-2 py-1 bg-black/50 backdrop-blur rounded text-[10px] font-mono text-white">
+            {{ imageSize }}
+          </span>
+        </div>
         <button 
           @click="handleFavorite"
           class="p-1.5 rounded-full backdrop-blur transition-all duration-200 hover:scale-110 min-w-[32px] min-h-[32px] flex items-center justify-center"
