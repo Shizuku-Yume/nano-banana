@@ -1,20 +1,20 @@
 <template>
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-sm animate-fade-in" @click.self="$emit('close')">
-        <div class="bg-white rounded-neo-lg shadow-neo-lift w-full max-w-6xl h-[85vh] flex flex-col border border-zinc-200 overflow-hidden">
+        <div class="bg-white dark:bg-zinc-900 rounded-neo-lg shadow-neo-lift dark:shadow-none w-full max-w-6xl h-[85vh] flex flex-col border border-zinc-200 dark:border-zinc-700 overflow-hidden">
             <!-- Header -->
-            <div class="p-4 border-b border-zinc-100 flex justify-between items-center bg-zinc-50">
+            <div class="p-4 border-b border-zinc-100 dark:border-zinc-700 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800">
                 <div class="flex items-center gap-3">
-                    <h2 class="text-xl font-bold text-zinc-800 flex items-center gap-2">
-                        <Library class="w-6 h-6 text-teal-600" /> 提示词仓库
+                    <h2 class="text-xl font-bold text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
+                        <Library class="w-6 h-6 text-teal-600 dark:text-teal-400" /> 提示词仓库
                     </h2>
                     <!-- Mode Toggle -->
-                    <div class="flex bg-zinc-200 rounded-full p-0.5">
+                    <div class="flex bg-zinc-200 dark:bg-zinc-700 rounded-full p-0.5">
                         <button
                             @click="currentMode = 'text-to-image'"
                             class="px-3 py-1 text-xs font-medium rounded-full transition-all"
                             :class="currentMode === 'text-to-image' 
-                                ? 'bg-white text-teal-700 shadow-sm' 
-                                : 'text-zinc-500 hover:text-zinc-700'"
+                                ? 'bg-white dark:bg-zinc-600 text-teal-700 dark:text-teal-400 shadow-sm' 
+                                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
                         >
                             文生图
                         </button>
@@ -22,8 +22,8 @@
                             @click="currentMode = 'image-to-image'"
                             class="px-3 py-1 text-xs font-medium rounded-full transition-all"
                             :class="currentMode === 'image-to-image' 
-                                ? 'bg-white text-teal-700 shadow-sm' 
-                                : 'text-zinc-500 hover:text-zinc-700'"
+                                ? 'bg-white dark:bg-zinc-600 text-teal-700 dark:text-teal-400 shadow-sm' 
+                                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'"
                         >
                             图生图
                         </button>
@@ -31,14 +31,14 @@
                 </div>
                 <button 
                     @click="$emit('close')"
-                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 transition-colors text-zinc-500"
+                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-500 dark:text-zinc-400"
                 >
                     <X class="w-5 h-5" />
                 </button>
             </div>
 
             <!-- Category Filter -->
-            <div class="px-4 py-3 border-b border-zinc-100 bg-white overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <div class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 <div class="flex gap-2">
                     <button
                         @click="selectedCategory = 'all'"
@@ -46,7 +46,7 @@
                             'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
                             selectedCategory === 'all'
                                 ? 'bg-teal-600 text-white shadow-md'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
                         ]"
                     >
                         全部
@@ -59,7 +59,7 @@
                             'px-4 py-1.5 rounded-full text-sm font-medium transition-all',
                             selectedCategory === cat
                                 ? 'bg-teal-600 text-white shadow-md'
-                                : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                                : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
                         ]"
                     >
                         {{ cat }}
@@ -68,19 +68,19 @@
             </div>
 
             <!-- Content -->
-            <div class="flex-1 overflow-y-auto p-4 bg-zinc-50">
+            <div class="flex-1 overflow-y-auto p-4 bg-zinc-50 dark:bg-zinc-900">
                 <div v-if="loading" class="flex flex-col items-center justify-center h-64 gap-4">
-                    <div class="w-12 h-12 border-4 border-teal-500 border-t-teal-700 rounded-full animate-spin"></div>
-                    <p class="text-zinc-500 font-medium">正在搬运仓库...</p>
+                    <div class="w-12 h-12 border-4 border-teal-500 border-t-teal-700 dark:border-teal-600 dark:border-t-teal-400 rounded-full animate-spin"></div>
+                    <p class="text-zinc-500 dark:text-zinc-400 font-medium">正在搬运仓库...</p>
                 </div>
 
                 <div v-else-if="error" class="flex flex-col items-center justify-center h-64 gap-4">
                     <div class="text-4xl">😵</div>
-                    <p class="text-red-600 font-medium">{{ error }}</p>
-                    <button @click="fetchPrompts" class="text-teal-600 hover:text-teal-700 underline">重试</button>
+                    <p class="text-red-600 dark:text-red-400 font-medium">{{ error }}</p>
+                    <button @click="fetchPrompts" class="text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 underline">重试</button>
                 </div>
 
-                <div v-else-if="filteredPrompts.length === 0" class="flex flex-col items-center justify-center h-64 text-zinc-500">
+                <div v-else-if="filteredPrompts.length === 0" class="flex flex-col items-center justify-center h-64 text-zinc-500 dark:text-zinc-400">
                     <div class="text-4xl mb-2">📭</div>
                     <p>该分类下暂无提示词</p>
                 </div>
@@ -89,10 +89,10 @@
                     <div 
                         v-for="item in filteredPrompts" 
                         :key="item.title"
-                        class="bg-white rounded-neo border border-zinc-200 overflow-hidden hover:shadow-neo-float transition-all duration-300 group flex flex-col"
+                        class="bg-white dark:bg-zinc-800 rounded-neo border border-zinc-200 dark:border-zinc-700 overflow-hidden hover:shadow-neo-float dark:hover:border-zinc-600 transition-all duration-300 group flex flex-col"
                     >
                         <!-- Image Preview -->
-                        <div class="aspect-square bg-zinc-100 relative overflow-hidden">
+                        <div class="aspect-square bg-zinc-100 dark:bg-zinc-700 relative overflow-hidden">
                             <img 
                                 :src="item.preview" 
                                 :alt="item.title"
@@ -103,7 +103,7 @@
                             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
                                 <button 
                                     @click="usePrompt(item)"
-                                    class="bg-white text-teal-700 px-5 py-2 rounded-full font-bold text-sm hover:bg-teal-600 hover:text-white transition-all transform translate-y-2 group-hover:translate-y-0 duration-300 shadow-lg"
+                                    class="bg-white dark:bg-zinc-800 text-teal-700 dark:text-teal-400 px-5 py-2 rounded-full font-bold text-sm hover:bg-teal-600 hover:text-white dark:hover:bg-teal-600 dark:hover:text-white transition-all transform translate-y-2 group-hover:translate-y-0 duration-300 shadow-lg"
                                 >
                                     立即使用
                                 </button>
@@ -113,22 +113,22 @@
                         <!-- Info -->
                         <div class="p-3 flex flex-col gap-2 flex-1">
                             <div class="flex justify-between items-start gap-2">
-                                <h3 class="font-bold text-zinc-800 line-clamp-1" :title="item.title">{{ item.title }}</h3>
+                                <h3 class="font-bold text-zinc-800 dark:text-zinc-100 line-clamp-1" :title="item.title">{{ item.title }}</h3>
                                 <button 
                                     @click="savePrompt(item)"
-                                    class="text-zinc-400 hover:text-teal-500 transition-colors"
+                                    class="text-zinc-400 dark:text-zinc-500 hover:text-teal-500 dark:hover:text-teal-400 transition-colors"
                                     title="收藏到预设库"
                                 >
                                     <Star class="w-4 h-4" />
                                 </button>
                             </div>
-                            <p class="text-xs text-zinc-500 line-clamp-2" :title="item.prompt">
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2" :title="item.prompt">
                                 {{ item.prompt }}
                             </p>
                             
                             <!-- Tags -->
                             <div class="mt-auto pt-2 flex gap-1 flex-wrap">
-                                <span class="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-1 rounded-full border border-zinc-200">
+                                <span class="text-[10px] bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 px-2 py-1 rounded-full border border-zinc-200 dark:border-zinc-600">
                                     {{ item.category || '通用' }}
                                 </span>
                             </div>
