@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Props {
-  variant?: 'primary' | 'secondary' | 'danger'
+  variant?: 'primary' | 'secondary' | 'danger' | 'outline'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   disabled?: boolean
@@ -27,9 +27,10 @@ const emit = defineEmits<{
         'px-3 py-1.5 text-sm': size === 'sm',
         'px-4 py-2 text-sm': size === 'md',
         'px-6 py-3 text-base': size === 'lg',
-        'bg-brand text-white hover:bg-brand-dark shadow-md disabled:opacity-50': variant === 'primary',
-        'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-50 shadow-neo-lift': variant === 'secondary',
+        'bg-brand dark:bg-teal-600 text-white hover:bg-brand-dark dark:hover:bg-teal-700 shadow-md disabled:opacity-50': variant === 'primary',
+        'bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-neo-lift dark:shadow-none': variant === 'secondary',
         'bg-red-500 text-white hover:bg-red-600 shadow-md': variant === 'danger',
+        'bg-transparent border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800': variant === 'outline',
         'cursor-not-allowed opacity-50': disabled || loading
       }
     ]"

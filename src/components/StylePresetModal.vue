@@ -38,7 +38,7 @@ const handleSave = () => {
   const trimmedName = name.value.trim()
   
   if (!trimmedName) {
-    error.value = 'Name is required'
+    error.value = '名称不能为空'
     return
   }
 
@@ -50,7 +50,7 @@ const handleSave = () => {
 }
 
 const handleDelete = () => {
-  if (props.preset?.id && confirm('Delete this preset?')) {
+  if (props.preset?.id && confirm('确定删除此预设？')) {
     emit('delete', props.preset.id)
     emit('close')
   }
@@ -75,38 +75,38 @@ const removeImage = () => {
 </script>
 
 <template>
-  <Modal :open="true" :title="preset ? 'Edit Style Preset' : 'New Style Preset'" @close="$emit('close')">
+  <Modal :open="true" :title="preset ? '编辑风格预设' : '新建风格预设'" @close="$emit('close')">
     <div class="space-y-5">
       <!-- Name Input -->
       <div>
-        <label class="text-sm font-medium text-zinc-700 block mb-1.5">Name</label>
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 block mb-1.5">名称</label>
         <input
           v-model="name"
           type="text"
-          placeholder="e.g. Neon Cyberpunk"
-          class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400"
+          placeholder="例如：霓虹赛博朋克"
+          class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
         />
         <p v-if="error" class="text-xs text-red-500 mt-1">{{ error }}</p>
       </div>
 
       <!-- Prompt Prefix -->
       <div>
-        <label class="text-sm font-medium text-zinc-700 block mb-1.5">Prompt Prefix</label>
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 block mb-1.5">提示词前缀</label>
         <textarea
           v-model="description"
           rows="3"
-          class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400 resize-none"
-          placeholder="Enter the style prompt that will be prepended..."
+          class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 resize-none"
+          placeholder="输入将自动添加到提示词开头的内容..."
         ></textarea>
-        <p class="text-xs text-zinc-500 mt-1">
-          This text will be automatically added to the start of your prompts.
+        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          此文本将自动添加到您的提示词开头。
         </p>
       </div>
 
       <!-- Thumbnail Image (Optional, only 1) -->
       <div>
-        <label class="text-sm font-medium text-zinc-700 block mb-1.5">
-          Thumbnail Image <span class="text-zinc-400 font-normal">(Optional)</span>
+        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 block mb-1.5">
+          缩略图 <span class="text-zinc-400 dark:text-zinc-500 font-normal">（可选）</span>
         </label>
         
         <div class="flex items-start gap-3">
@@ -114,8 +114,8 @@ const removeImage = () => {
           <div v-if="thumbnailImage" class="relative group">
             <img 
               :src="thumbnailImage" 
-              alt="Thumbnail"
-              class="w-20 h-20 object-cover rounded-lg border border-zinc-200"
+              alt="缩略图"
+              class="w-20 h-20 object-cover rounded-lg border border-zinc-200 dark:border-zinc-700"
             />
             <button
               @click="removeImage"
@@ -125,9 +125,9 @@ const removeImage = () => {
             </button>
           </div>
           
-          <label v-else class="w-20 h-20 border-2 border-dashed border-zinc-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-teal-400 hover:bg-teal-50 transition-colors">
-            <ImagePlus class="w-6 h-6 text-zinc-400" />
-            <span class="text-xs text-zinc-400 mt-1">Add</span>
+          <label v-else class="w-20 h-20 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-teal-400 dark:hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors">
+            <ImagePlus class="w-6 h-6 text-zinc-400 dark:text-zinc-500" />
+            <span class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">添加</span>
             <input 
               type="file" 
               accept="image/*" 
@@ -136,15 +136,15 @@ const removeImage = () => {
             />
           </label>
           
-          <p class="text-xs text-zinc-500 flex-1">
-            Add a thumbnail to help identify this preset visually.
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 flex-1">
+            添加缩略图以便于视觉识别此预设。
           </p>
         </div>
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="flex justify-between items-center mt-6 pt-4 border-t border-zinc-100">
+    <div class="flex justify-between items-center mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-700">
       <div>
         <Button
           v-if="preset"
@@ -152,12 +152,12 @@ const removeImage = () => {
           size="sm"
           @click="handleDelete"
         >
-          Delete
+          删除
         </Button>
       </div>
       <div class="flex gap-3">
-        <Button variant="secondary" @click="$emit('close')">Cancel</Button>
-        <Button variant="primary" @click="handleSave">Save Preset</Button>
+        <Button variant="secondary" @click="$emit('close')">取消</Button>
+        <Button variant="primary" @click="handleSave">保存预设</Button>
       </div>
     </div>
   </Modal>

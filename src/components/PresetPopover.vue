@@ -47,7 +47,7 @@ const handleEdit = (e: Event, preset: StylePreset) => {
 
 const handleDelete = (e: Event, id: number) => {
   e.stopPropagation()
-  if (confirm('Delete this preset?')) {
+  if (confirm('确定删除此预设？')) {
     emit('delete', id)
   }
 }
@@ -71,13 +71,13 @@ const handleOpenWarehouse = () => {
       class="flex items-center gap-2 px-3 py-2 rounded-neo border transition-all min-h-[44px]"
       :class="[
         selectedPreset 
-          ? 'bg-teal-50 border-teal-200 text-teal-700' 
-          : 'bg-zinc-100 border-zinc-200 text-zinc-600 hover:bg-zinc-200'
+          ? 'bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400' 
+          : 'bg-zinc-100 dark:bg-zinc-700 border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600'
       ]"
     >
       <BookMarked class="w-4 h-4" />
       <span class="text-sm font-medium max-w-[100px] truncate">
-        {{ selectedPreset?.name || 'Presets' }}
+        {{ selectedPreset?.name || '预设' }}
       </span>
       <ChevronDown 
         class="w-4 h-4 transition-transform" 
@@ -96,14 +96,14 @@ const handleOpenWarehouse = () => {
     >
       <div
         v-if="isOpen"
-        class="absolute bottom-full left-0 mb-2 w-80 bg-white rounded-neo-lg shadow-neo-lift border border-zinc-200 overflow-hidden z-50"
+        class="absolute bottom-full left-0 mb-2 w-80 bg-white dark:bg-zinc-800 rounded-neo-lg shadow-neo-lift dark:shadow-none border border-zinc-200 dark:border-zinc-700 overflow-hidden z-50"
       >
         <!-- Header -->
-        <div class="p-3 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
-          <h3 class="text-sm font-bold text-zinc-800">Prompt Presets</h3>
+        <div class="p-3 border-b border-zinc-100 dark:border-zinc-700 flex items-center justify-between bg-zinc-50 dark:bg-zinc-800">
+          <h3 class="text-sm font-bold text-zinc-800 dark:text-zinc-100">提示词预设</h3>
           <button
             @click="isOpen = false"
-            class="p-1 rounded hover:bg-zinc-200 text-zinc-400"
+            class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 dark:text-zinc-500"
           >
             <X class="w-4 h-4" />
           </button>
@@ -117,14 +117,14 @@ const handleOpenWarehouse = () => {
             class="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-3"
             :class="[
               !selectedId 
-                ? 'bg-teal-50 text-teal-700' 
-                : 'hover:bg-zinc-100 text-zinc-600'
+                ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400' 
+                : 'hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-600 dark:text-zinc-300'
             ]"
           >
-            <div class="w-8 h-8 rounded bg-zinc-200 flex items-center justify-center text-zinc-400">
+            <div class="w-8 h-8 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-400 dark:text-zinc-500">
               <X class="w-4 h-4" />
             </div>
-            <span class="font-medium">None</span>
+            <span class="font-medium">无</span>
           </button>
 
           <!-- Presets -->
@@ -134,8 +134,8 @@ const handleOpenWarehouse = () => {
             class="mt-1 rounded-lg transition-colors group"
             :class="[
               String(preset.id) === selectedId 
-                ? 'bg-teal-50' 
-                : 'hover:bg-zinc-100'
+                ? 'bg-teal-50 dark:bg-teal-900/30' 
+                : 'hover:bg-zinc-100 dark:hover:bg-zinc-700'
             ]"
           >
             <div class="flex items-center gap-3 px-3 py-2">
@@ -143,7 +143,7 @@ const handleOpenWarehouse = () => {
               <button
                 @click="handleSelectPreset(preset)"
                 class="flex items-center gap-3 flex-1 min-w-0 text-left"
-                :class="String(preset.id) === selectedId ? 'text-teal-700' : 'text-zinc-600'"
+                :class="String(preset.id) === selectedId ? 'text-teal-700 dark:text-teal-400' : 'text-zinc-600 dark:text-zinc-300'"
               >
                 <!-- Thumbnail or placeholder -->
                 <div class="w-8 h-8 rounded overflow-hidden flex-shrink-0">
@@ -153,13 +153,13 @@ const handleOpenWarehouse = () => {
                     alt=""
                     class="w-full h-full object-cover"
                   />
-                  <div v-else class="w-full h-full bg-gradient-to-br from-teal-100 to-teal-200 flex items-center justify-center">
-                    <BookMarked class="w-3 h-3 text-teal-500" />
+                  <div v-else class="w-full h-full bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900 dark:to-teal-800 flex items-center justify-center">
+                    <BookMarked class="w-3 h-3 text-teal-500 dark:text-teal-400" />
                   </div>
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-sm truncate">{{ preset.name }}</p>
-                  <p v-if="preset.description" class="text-xs text-zinc-400 truncate">{{ preset.description }}</p>
+                  <p v-if="preset.description" class="text-xs text-zinc-400 dark:text-zinc-500 truncate">{{ preset.description }}</p>
                 </div>
               </button>
 
@@ -167,15 +167,15 @@ const handleOpenWarehouse = () => {
               <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   @click="handleEdit($event, preset)"
-                  class="p-1.5 rounded hover:bg-zinc-200 text-zinc-400 hover:text-zinc-600"
-                  title="Edit"
+                  class="p-1.5 rounded hover:bg-zinc-200 dark:hover:bg-zinc-600 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+                  title="编辑"
                 >
                   <Pencil class="w-3.5 h-3.5" />
                 </button>
                 <button
                   @click="handleDelete($event, preset.id!)"
-                  class="p-1.5 rounded hover:bg-red-100 text-zinc-400 hover:text-red-600"
-                  title="Delete"
+                  class="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-zinc-400 dark:text-zinc-500 hover:text-red-600 dark:hover:text-red-400"
+                  title="删除"
                 >
                   <Trash2 class="w-3.5 h-3.5" />
                 </button>
@@ -184,27 +184,27 @@ const handleOpenWarehouse = () => {
           </div>
 
           <!-- Empty State -->
-          <div v-if="presets.length === 0" class="py-6 text-center text-zinc-400">
+          <div v-if="presets.length === 0" class="py-6 text-center text-zinc-400 dark:text-zinc-500">
             <BookMarked class="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p class="text-sm">No presets yet</p>
+            <p class="text-sm">暂无预设</p>
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="p-2 border-t border-zinc-100 flex gap-2">
+        <div class="p-2 border-t border-zinc-100 dark:border-zinc-700 flex gap-2">
           <button
             @click="handleCreate"
-            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors"
+            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
           >
             <Plus class="w-4 h-4" />
-            Create New
+            新建
           </button>
           <button
             @click="handleOpenWarehouse"
-            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors"
+            class="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 transition-colors"
           >
             <Library class="w-4 h-4" />
-            Warehouse
+            仓库
           </button>
         </div>
       </div>

@@ -60,7 +60,7 @@ const handleAddProvider = () => {
 }
 
 const confirmDelete = (id: string) => {
-  if (confirm('Are you sure you want to delete this provider?')) {
+  if (confirm('确定要删除此服务商配置吗？')) {
     emit('deleteProvider', id)
   }
 }
@@ -71,13 +71,13 @@ const confirmDelete = (id: string) => {
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-sm animate-fade-in"
     @click.self="$emit('close')"
   >
-    <div class="bg-white rounded-neo-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-neo-lg shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-zinc-200 dark:border-zinc-700">
       <!-- Header -->
-      <div class="p-4 border-b border-zinc-200 flex justify-between items-center bg-zinc-50">
-        <h2 class="text-xl font-bold text-zinc-800">API Configuration</h2>
+      <div class="p-4 border-b border-zinc-200 dark:border-zinc-700 flex justify-between items-center bg-zinc-50 dark:bg-zinc-800">
+        <h2 class="text-xl font-bold text-zinc-800 dark:text-zinc-100">API 配置</h2>
         <button 
           @click="$emit('close')"
-          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 transition-colors text-zinc-500"
+          class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors text-zinc-500 dark:text-zinc-400"
         >
           <X class="w-5 h-5" />
         </button>
@@ -85,15 +85,15 @@ const confirmDelete = (id: string) => {
 
       <div class="flex flex-col md:flex-row flex-1 overflow-hidden">
         <!-- Provider List (Left Sidebar) -->
-        <div class="w-full md:w-56 border-b md:border-b-0 md:border-r border-zinc-200 bg-zinc-50 flex flex-col shrink-0">
-          <div class="p-3 border-b border-zinc-200">
+        <div class="w-full md:w-56 border-b md:border-b-0 md:border-r border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex flex-col shrink-0">
+          <div class="p-3 border-b border-zinc-200 dark:border-zinc-700">
             <Button 
               variant="outline" 
-              class="w-full justify-start text-xs border-dashed hover:border-teal-500 hover:bg-teal-50 hover:text-teal-700 transition-all"
+              class="w-full justify-start text-xs border-dashed hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/30 hover:text-teal-700 dark:hover:text-teal-400 transition-all"
               @click="handleAddProvider"
             >
               <Plus class="w-3 h-3 mr-2" />
-              Add Provider
+              添加服务商
             </Button>
           </div>
           
@@ -105,11 +105,11 @@ const confirmDelete = (id: string) => {
               class="w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group flex items-center justify-between"
               :class="[
                 activeProviderId === provider.id 
-                  ? 'bg-teal-50 text-teal-700 border border-teal-200' 
-                  : 'text-zinc-600 hover:bg-zinc-100 border border-transparent'
+                  ? 'bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 border border-teal-200 dark:border-teal-800' 
+                  : 'text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-transparent'
               ]"
             >
-              <span class="truncate font-medium">{{ provider.name || 'Untitled' }}</span>
+              <span class="truncate font-medium">{{ provider.name || '未命名' }}</span>
               <div 
                 v-if="activeProviderId === provider.id"
                 class="w-2 h-2 rounded-full bg-teal-500"
@@ -125,8 +125,8 @@ const confirmDelete = (id: string) => {
             <!-- Header with Delete -->
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-bold text-zinc-800">{{ localName || 'Configure Provider' }}</h3>
-                <p class="text-xs text-zinc-500 mt-0.5">Manage API credentials and model settings</p>
+                <h3 class="text-lg font-bold text-zinc-800 dark:text-zinc-100">{{ localName || '配置服务商' }}</h3>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">管理 API 凭据和模型设置</p>
               </div>
               
               <Button 
@@ -145,67 +145,67 @@ const confirmDelete = (id: string) => {
               
               <!-- Name -->
               <div class="space-y-1.5">
-                <label class="text-sm font-medium text-zinc-700">Provider Name</label>
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">服务商名称</label>
                 <input 
                   v-model="localName"
                   @blur="handleNameBlur"
-                  placeholder="e.g. OpenRouter, My Local LLM"
-                  class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400"
+                  placeholder="例如：OpenRouter, 本地 LLM"
+                  class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                 />
               </div>
 
               <!-- API Key -->
               <div class="space-y-1.5">
-                <label class="text-sm font-medium text-zinc-700 flex items-center gap-1.5">
-                  <Key class="w-4 h-4 text-zinc-400" /> API Key
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Key class="w-4 h-4 text-zinc-400 dark:text-zinc-500" /> API 密钥
                 </label>
                 <input 
                   v-model="localKey"
                   @blur="handleKeyBlur"
                   type="password"
                   placeholder="sk-..."
-                  class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400 font-mono"
+                  class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-mono"
                 />
-                <p class="text-xs text-zinc-500">Keys are stored locally in your browser</p>
+                <p class="text-xs text-zinc-500 dark:text-zinc-400">密钥仅保存在您的浏览器本地</p>
               </div>
 
               <!-- Endpoint -->
               <div class="space-y-1.5">
-                <label class="text-sm font-medium text-zinc-700 flex items-center gap-1.5">
-                  <Globe class="w-4 h-4 text-zinc-400" /> API Endpoint
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Globe class="w-4 h-4 text-zinc-400 dark:text-zinc-500" /> API 端点
                 </label>
                 <input 
                   v-model="localEndpoint"
                   @blur="handleEndpointBlur"
                   placeholder="https://openrouter.ai/api/v1"
-                  class="w-full bg-zinc-100 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400 font-mono text-sm"
+                  class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-neo px-4 py-2.5 outline-none transition-all focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-mono text-sm"
                 />
               </div>
 
               <!-- Model Selection -->
               <div class="space-y-1.5">
                 <div class="flex items-center justify-between">
-                  <label class="text-sm font-medium text-zinc-700 flex items-center gap-1.5">
-                    <Cpu class="w-4 h-4 text-zinc-400" /> Model
+                  <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                    <Cpu class="w-4 h-4 text-zinc-400 dark:text-zinc-500" /> 模型
                   </label>
                   <button 
                     @click="$emit('fetchModels')" 
-                    class="text-xs font-medium text-teal-600 hover:text-teal-700 transition-colors flex items-center gap-1"
+                    class="text-xs font-medium text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 transition-colors flex items-center gap-1"
                     :disabled="isLoadingModels"
                   >
                     <span v-if="isLoadingModels" class="animate-spin">⟳</span>
                     <span v-else>↻</span>
-                    {{ isLoadingModels ? 'Fetching...' : 'Refresh' }}
+                    {{ isLoadingModels ? '获取中...' : '刷新' }}
                   </button>
                 </div>
                 
                 <select 
                   :value="localModel"
                   @change="handleModelChange"
-                  class="w-full bg-zinc-100 border border-zinc-200 text-zinc-900 text-sm rounded-neo p-2.5 focus:ring-2 focus:ring-teal-200 focus:border-teal-300 outline-none appearance-none transition-all"
+                  class="w-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 text-sm rounded-neo p-2.5 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 focus:border-teal-300 dark:focus:border-teal-700 outline-none appearance-none transition-all"
                 >
-                  <option value="" disabled>Select a model...</option>
-                  <optgroup v-if="models.length > 0" label="Available Models">
+                  <option value="" disabled>选择模型...</option>
+                  <optgroup v-if="models.length > 0" label="可用模型">
                     <option 
                       v-for="model in models" 
                       :key="model.id" 
@@ -215,22 +215,22 @@ const confirmDelete = (id: string) => {
                     </option>
                   </optgroup>
                   <option v-else value="google/gemini-2.5-flash-image-preview:free">
-                    Default (Gemini 2.5 Flash)
+                    默认 (Gemini 2.5 Flash)
                   </option>
                 </select>
                 
                 <!-- Manual Model Input -->
                 <div class="mt-2">
                   <div class="flex items-center gap-2 mb-1">
-                    <div class="h-px bg-zinc-200 flex-1"></div>
-                    <span class="text-xs text-zinc-400">Or type manually</span>
-                    <div class="h-px bg-zinc-200 flex-1"></div>
+                    <div class="h-px bg-zinc-200 dark:bg-zinc-700 flex-1"></div>
+                    <span class="text-xs text-zinc-400 dark:text-zinc-500">或手动输入</span>
+                    <div class="h-px bg-zinc-200 dark:bg-zinc-700 flex-1"></div>
                   </div>
                   <input 
                     v-model="localModel"
                     @blur="handleManualModelBlur"
                     placeholder="vendor/model-name"
-                    class="w-full bg-zinc-100 rounded-neo px-4 py-2 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-teal-200 text-zinc-900 placeholder:text-zinc-400 font-mono text-sm"
+                    class="w-full bg-zinc-100 dark:bg-zinc-800 rounded-neo px-4 py-2 outline-none transition-all focus:bg-white dark:focus:bg-zinc-700 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-mono text-sm"
                   />
                 </div>
               </div>
@@ -238,16 +238,16 @@ const confirmDelete = (id: string) => {
             </div>
           </div>
           
-          <div v-else class="flex-1 flex flex-col items-center justify-center text-zinc-400 p-8 text-center">
-            <div class="w-16 h-16 rounded-full bg-zinc-100 flex items-center justify-center mb-4">
+          <div v-else class="flex-1 flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
               <Cpu class="w-8 h-8 opacity-40" />
             </div>
-            <p>Select a provider to configure</p>
+            <p>选择一个服务商进行配置</p>
           </div>
           
           <!-- Action Bar -->
-          <div class="p-4 border-t border-zinc-200 bg-zinc-50 flex justify-end">
-            <Button variant="primary" @click="$emit('close')">Done</Button>
+          <div class="p-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 flex justify-end">
+            <Button variant="primary" @click="$emit('close')">完成</Button>
           </div>
         </div>
       </div>

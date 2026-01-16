@@ -66,17 +66,17 @@ const handleIterate = (e: Event) => {
 
 <template>
   <div 
-    class="relative group rounded-neo-lg overflow-hidden bg-zinc-100 shadow-neo-lift hover:shadow-neo-float hover:scale-[1.02] transition-all duration-300 ease-out cursor-pointer"
+    class="relative group rounded-neo-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 shadow-neo-lift dark:shadow-none dark:border dark:border-zinc-700 hover:shadow-neo-float dark:hover:border-zinc-600 hover:scale-[1.02] transition-all duration-300 ease-out cursor-pointer"
     :class="aspectRatioClass"
     @click="$emit('click')"
   >
-    <div v-if="status === 'generating'" class="absolute inset-0 flex items-center justify-center bg-zinc-50 z-20">
-      <div class="w-8 h-8 border-2 border-brand/30 border-t-brand rounded-full animate-spin"></div>
+    <div v-if="status === 'generating'" class="absolute inset-0 flex items-center justify-center bg-zinc-50 dark:bg-zinc-800 z-20">
+      <div class="w-8 h-8 border-2 border-brand/30 dark:border-teal-500/30 border-t-brand dark:border-t-teal-500 rounded-full animate-spin"></div>
     </div>
 
-    <div v-else-if="status === 'error'" class="absolute inset-0 flex flex-col items-center justify-center bg-red-50 p-4 z-20">
-      <span class="text-sm text-red-500 font-medium">Failed</span>
-      <span v-if="error" class="text-xs text-red-400 mt-1 text-center truncate w-full">{{ error }}</span>
+    <div v-else-if="status === 'error'" class="absolute inset-0 flex flex-col items-center justify-center bg-red-50 dark:bg-red-900/20 p-4 z-20">
+      <span class="text-sm text-red-500 dark:text-red-400 font-medium">失败</span>
+      <span v-if="error" class="text-xs text-red-400 dark:text-red-500 mt-1 text-center truncate w-full">{{ error }}</span>
     </div>
 
     <div v-else-if="status === 'success' && image" class="w-full h-full relative">
@@ -111,14 +111,14 @@ const handleIterate = (e: Event) => {
           <button 
             @click="handleIterate"
             class="p-2 bg-white/20 backdrop-blur rounded-full text-white transition-all duration-200 hover:bg-brand hover:scale-110 min-w-[36px] min-h-[36px] flex items-center justify-center"
-            title="Use as reference"
+            title="作为参考图使用"
           >
             <RefreshCw :size="16" />
           </button>
           <button 
             @click="handleDownload"
             class="p-2 bg-white/20 backdrop-blur rounded-full text-white transition-all duration-200 hover:bg-teal-500 hover:scale-110 min-w-[36px] min-h-[36px] flex items-center justify-center"
-            title="Download"
+            title="下载"
           >
             <Download :size="16" />
           </button>
@@ -127,7 +127,7 @@ const handleIterate = (e: Event) => {
         <button 
           @click="handleDelete"
           class="p-2 bg-white/20 backdrop-blur rounded-full text-white transition-all duration-200 hover:bg-red-500 hover:scale-110 min-w-[36px] min-h-[36px] flex items-center justify-center"
-          title="Delete"
+          title="删除"
         >
           <Trash2 :size="16" />
         </button>

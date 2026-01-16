@@ -101,6 +101,7 @@ onUnmounted(() => {
         <button 
           @click="emit('favorite', currentImage.id)" 
           class="p-2 text-white/80 hover:text-white transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+          title="收藏"
         >
           <Heart class="w-5 h-5 md:w-5 md:h-5" />
         </button>
@@ -108,6 +109,7 @@ onUnmounted(() => {
         <button 
           @click="emit('download', currentImage)" 
           class="p-2 text-white/80 hover:text-white transition-all duration-200 hover:scale-110 min-w-[44px] min-h-[44px] flex items-center justify-center"
+          title="下载"
         >
           <Download class="w-5 h-5 md:w-5 md:h-5" />
         </button>
@@ -115,6 +117,7 @@ onUnmounted(() => {
         <button 
           @click="emit('iterate', currentImage)" 
           class="p-2 text-white/80 hover:text-white transition-all duration-200 hover:scale-110 hover:rotate-180 min-w-[44px] min-h-[44px] flex items-center justify-center"
+          title="迭代"
         >
           <RefreshCw class="w-5 h-5 md:w-5 md:h-5" />
         </button>

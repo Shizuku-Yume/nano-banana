@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-zinc-50 text-zinc-900">
+    <div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
         <AppHeader 
             :active-tab="activeTab"
             :is-connected="!!apiKey"
@@ -20,9 +20,9 @@
                     
                     <div v-if="activeBatches.length === 0" class="text-center py-20">
                         <div class="text-6xl mb-4">🍌</div>
-                        <h2 class="text-2xl font-bold text-zinc-700 mb-2">Nano Banana v2.0</h2>
-                        <p class="text-zinc-500">AI Image Generation Suite</p>
-                        <p class="text-zinc-400 text-sm mt-4">Use the command center below to start generating</p>
+                        <h2 class="text-2xl font-bold text-zinc-700 dark:text-zinc-300 mb-2">Nano Banana v2.0</h2>
+                        <p class="text-zinc-500 dark:text-zinc-400">AI 图像生成套件</p>
+                        <p class="text-zinc-400 dark:text-zinc-500 text-sm mt-4">使用下方命令中心开始生成</p>
                     </div>
                 </div>
 
@@ -48,7 +48,7 @@
                     
                     <div v-if="favoriteImages.length === 0 && !isLoadingFavorites" class="text-center py-20">
                         <div class="text-5xl mb-4">❤️</div>
-                        <p class="text-zinc-500">No favorites yet</p>
+                        <p class="text-zinc-500 dark:text-zinc-400">暂无收藏</p>
                     </div>
                 </div>
             </div>
@@ -317,7 +317,7 @@ const handleFetchModels = async () => {
         }))
         LocalStorage.saveModelCache(activeProvider.value.endpoint, modelOptions.value)
     } catch (err) {
-        addToast('error', err instanceof Error ? err.message : 'Failed to fetch models')
+        addToast('error', err instanceof Error ? err.message : '获取模型列表失败')
     } finally {
         isFetchingModels.value = false
     }
@@ -327,12 +327,12 @@ const MAX_CONCURRENT = 3
 
 const handleGenerate = async () => {
     if (!prompt.value.trim()) {
-        addToast('warning', 'Please enter a prompt to generate images')
+        addToast('warning', '请输入提示词以生成图像')
         return
     }
     
     if (!apiKey.value) {
-        addToast('warning', 'Please configure your API key first')
+        addToast('warning', '请先配置您的 API 密钥')
         showApiConfig.value = true
         return
     }
@@ -374,7 +374,7 @@ const handleGenerate = async () => {
     try {
         await processQueue(tasks, MAX_CONCURRENT)
     } catch (err) {
-        addToast('error', 'Generation queue failed unexpectedly')
+        addToast('error', '生成队列意外失败')
         console.error('Queue processing error:', err)
     } finally {
         isGenerating.value = false
@@ -434,14 +434,14 @@ async function executeTask(task: GenerationTask) {
         task.status = 'success'
         activeBatches.value = [...activeBatches.value]
     } catch (err) {
-        let errorMessage = 'Generation failed'
+        let errorMessage = '生成失败'
         if (err instanceof Error) {
             if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-                errorMessage = 'Network error - check your connection'
+                errorMessage = '网络错误 - 请检查连接'
             } else if (err.message.includes('401') || err.message.includes('Unauthorized')) {
-                errorMessage = 'Invalid API key'
+                errorMessage = 'API 密钥无效'
             } else if (err.message.includes('429') || err.message.includes('rate')) {
-                errorMessage = 'Rate limited - please wait'
+                errorMessage = '请求过于频繁 - 请稍候'
             } else {
                 errorMessage = err.message
             }
@@ -449,7 +449,7 @@ async function executeTask(task: GenerationTask) {
         task.error = errorMessage
         task.status = 'error'
         activeBatches.value = [...activeBatches.value]
-        addToast('error', `Failed: ${errorMessage}`)
+        addToast('error', `失败: ${errorMessage}`)
     }
 }
 
@@ -518,10 +518,10 @@ const handleReuse = (image: GeneratedImage) => {
 const handleSavePreset = async (preset: Omit<StylePreset, 'id'>) => {
     if (editingPreset.value?.id) {
         await presetStorage.update(editingPreset.value.id, preset)
-        addToast('success', 'Preset updated')
+        addToast('success', '预设已更新')
     } else {
         await presetStorage.addPreset(preset)
-        addToast('success', 'Preset saved')
+        addToast('success', '预设已保存')
     }
     stylePresets.value = await presetStorage.getAll()
     showStyleModal.value = false
@@ -535,7 +535,7 @@ const handleApplyPreset = (preset: StylePreset) => {
     if (preset.referenceImages?.length) {
         referenceImages.value = [...preset.referenceImages, ...referenceImages.value].slice(0, 4)
     }
-    addToast('success', `Applied "${preset.name}"`)
+    addToast('success', `已应用「${preset.name}」`)
 }
 
 const handleEditPreset = (preset: StylePreset) => {
@@ -549,13 +549,13 @@ const handleDeletePreset = async (id: number) => {
     if (selectedStyleId.value === String(id)) {
         selectedStyleId.value = null
     }
-    addToast('success', 'Preset deleted')
+    addToast('success', '预设已删除')
 }
 
 const handleUseWarehousePrompt = (warehousePrompt: string) => {
     prompt.value = warehousePrompt
     showPromptWarehouse.value = false
-    addToast('success', 'Prompt loaded')
+    addToast('success', '提示词已加载')
 }
 
 const handleSaveWarehousePrompt = async (template: StyleTemplate) => {
@@ -565,7 +565,7 @@ const handleSaveWarehousePrompt = async (template: StyleTemplate) => {
     }
     await presetStorage.addPreset(preset)
     stylePresets.value = await presetStorage.getAll()
-    addToast('success', `"${template.title}" saved to presets`)
+    addToast('success', `「${template.title}」已保存到预设`)
 }
 
 const addToast = (type: ToastItem['type'], message: string) => {

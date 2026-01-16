@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import type { GeneratedImage } from '../types'
 import ImageCard from './ImageCard.vue'
 
@@ -58,7 +58,7 @@ onUnmounted(() => {
       <div 
         v-for="i in 8" 
         :key="`skeleton-${i}`" 
-        class="bg-zinc-800/50 border border-dark-border rounded-neo-lg animate-pulse aspect-square shadow-neo-inset"
+        class="bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-neo-lg animate-pulse aspect-square shadow-neo-inset dark:shadow-none"
       ></div>
     </template>
 

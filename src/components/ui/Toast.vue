@@ -15,9 +15,9 @@ const getClassByType = (type: string) => {
     case 'warning':
       return 'border-l-4 border-amber-400'
     case 'loading':
-      return 'border-l-4 border-zinc-400'
+      return 'border-l-4 border-zinc-400 dark:border-zinc-500'
     default:
-      return 'border-l-4 border-zinc-400'
+      return 'border-l-4 border-zinc-400 dark:border-zinc-500'
   }
 }
 </script>
@@ -28,7 +28,7 @@ const getClassByType = (type: string) => {
       <div 
         v-for="toast in toasts" 
         :key="toast.id"
-        class="pointer-events-auto bg-white rounded-neo px-4 py-3 shadow-neo-lift min-w-[280px] flex items-center gap-3 animate-slide-up"
+        class="pointer-events-auto bg-white dark:bg-zinc-800 rounded-neo px-4 py-3 shadow-neo-lift dark:shadow-none dark:border dark:border-zinc-700 min-w-[280px] flex items-center gap-3 animate-slide-up"
         :class="getClassByType(toast.type)"
       >
         <!-- Icons -->
@@ -36,11 +36,11 @@ const getClassByType = (type: string) => {
           <Check v-if="toast.type === 'success'" class="w-5 h-5 text-teal-500" />
           <X v-else-if="toast.type === 'error'" class="w-5 h-5 text-red-500" />
           <AlertTriangle v-else-if="toast.type === 'warning'" class="w-5 h-5 text-amber-500" />
-          <div v-else-if="toast.type === 'loading'" class="w-4 h-4 border-2 border-zinc-300 border-t-zinc-600 rounded-full animate-spin"></div>
+          <div v-else-if="toast.type === 'loading'" class="w-4 h-4 border-2 border-zinc-300 dark:border-zinc-600 border-t-zinc-600 dark:border-t-zinc-300 rounded-full animate-spin"></div>
         </div>
         
         <!-- Message -->
-        <p class="text-zinc-700 text-sm font-medium">{{ toast.message }}</p>
+        <p class="text-zinc-700 dark:text-zinc-200 text-sm font-medium">{{ toast.message }}</p>
       </div>
     </transition-group>
   </div>

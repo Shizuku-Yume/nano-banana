@@ -52,9 +52,9 @@ const removeImage = (index: number) => {
     <div 
       v-for="(img, index) in modelValue" 
       :key="index"
-      class="relative w-12 h-12 rounded-neo overflow-hidden border border-zinc-200 group"
+      class="relative w-12 h-12 rounded-neo overflow-hidden border border-zinc-200 dark:border-zinc-700 group"
     >
-      <img :src="img" class="w-full h-full object-cover" alt="Reference" />
+      <img :src="img" class="w-full h-full object-cover" alt="参考图" />
       <button 
         @click="removeImage(index)"
         class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -66,7 +66,7 @@ const removeImage = (index: number) => {
     <button
       v-if="modelValue.length < max"
       @click="triggerFileInput"
-      class="w-12 h-12 border-2 border-dashed border-zinc-300 rounded-neo flex items-center justify-center text-zinc-400 hover:border-brand hover:text-brand transition-colors cursor-pointer"
+      class="w-12 h-12 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-neo flex items-center justify-center text-zinc-400 dark:text-zinc-500 hover:border-brand dark:hover:border-teal-500 hover:text-brand dark:hover:text-teal-500 transition-colors cursor-pointer"
     >
       <Plus :size="20" />
       <input

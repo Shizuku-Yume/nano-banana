@@ -205,12 +205,31 @@ export class LocalStorage {
         }
     }
 
-    static getActiveProviderId(): string {
+static getActiveProviderId(): string {
         try {
             return localStorage.getItem(this.ACTIVE_PROVIDER_ID) || ''
         } catch (error) {
             console.warn('无法读取当前API提供商ID:', error)
             return ''
+        }
+    }
+
+    private static readonly THEME = 'nano-banana-theme'
+
+    static saveTheme(theme: string): void {
+        try {
+            localStorage.setItem(this.THEME, theme)
+        } catch (error) {
+            console.warn('无法保存主题设置:', error)
+        }
+    }
+
+    static getTheme(): string {
+        try {
+            return localStorage.getItem(this.THEME) || 'system'
+        } catch (error) {
+            console.warn('无法读取主题设置:', error)
+            return 'system'
         }
     }
 }
