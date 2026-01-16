@@ -82,7 +82,7 @@ export async function generateImage(request: GenerateRequest, maxRetries: number
         try {
             console.log(`尝试生成图片 (第 ${attempt}/${maxRetries} 次)...`)
 
-            const apiEndpoint = request.endpoint?.trim() || DEFAULT_API_ENDPOINT
+            const apiEndpoint = resolveChatEndpoint(request.endpoint?.trim() || DEFAULT_API_ENDPOINT)
             const modelId = request.model?.trim() || DEFAULT_MODEL_ID
 
             // 检查是否是 Gemini 3 Pro Image 模型
@@ -322,5 +322,40 @@ function resolveModelsEndpoint(endpoint: string): string {
     } catch (error) {
         console.warn('无法解析模型列表端点，将使用默认规则:', error)
         return endpoint.replace(/\/$/, '') + '/v1/models'
+    }
+}
+
+function resolveChatEndpoint(endpoint: string): string {
+    try {
+        const url = new URL(endpoint)
+        const segments = url.pathname.split('/').filter(Boolean)
+
+        if (segments.length === 0) {
+            url.pathname = '/v1/chat/completions'
+            return url.toString()
+        }
+
+        const lastSegment = segments[segments.length - 1]
+
+        if (lastSegment === 'completions') {
+            return url.toString()
+        }
+
+        if (lastSegment === 'chat') {
+            segments.push('completions')
+        } else if (lastSegment === 'v1' || lastSegment === 'api') {
+            segments.push('chat', 'completions')
+        } else if (lastSegment === 'models') {
+            segments.pop()
+            segments.push('chat', 'completions')
+        } else {
+            segments.push('chat', 'completions')
+        }
+
+        url.pathname = '/' + segments.join('/')
+        return url.toString()
+    } catch (error) {
+        console.warn('无法解析聊天端点，将使用默认规则:', error)
+        return endpoint.replace(/\/$/, '') + '/v1/chat/completions'
     }
 }
