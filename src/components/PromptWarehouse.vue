@@ -221,7 +221,7 @@ const savePrompt = (item: WarehouseItem) => {
         title: item.title,
         prompt: item.prompt,
         description: item.category || '来自提示词仓库',
-        image: '',
+        image: item.preview,
         mode: currentMode.value
     }
     emit('save-prompt', template)

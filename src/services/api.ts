@@ -293,7 +293,7 @@ function resolveModelsEndpoint(endpoint: string): string {
         const segments = url.pathname.split('/').filter(Boolean)
 
         if (segments.length === 0) {
-            url.pathname = '/models'
+            url.pathname = '/v1/models'
             return url.toString()
         }
 
@@ -311,6 +311,8 @@ function resolveModelsEndpoint(endpoint: string): string {
             } else {
                 segments.push('models')
             }
+        } else if (lastSegment === 'v1' || lastSegment === 'api') {
+            segments.push('models')
         } else {
             segments.push('models')
         }
@@ -319,6 +321,6 @@ function resolveModelsEndpoint(endpoint: string): string {
         return url.toString()
     } catch (error) {
         console.warn('无法解析模型列表端点，将使用默认规则:', error)
-        return endpoint.replace(/\/$/, '') + '/models'
+        return endpoint.replace(/\/$/, '') + '/v1/models'
     }
 }
