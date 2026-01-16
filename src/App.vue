@@ -401,6 +401,7 @@ async function processQueue(tasks: GenerationTask[], concurrency: number) {
 
 async function executeTask(task: GenerationTask) {
     task.status = 'generating'
+    activeBatches.value = [...activeBatches.value]
     try {
         const result = await generateImage({
             prompt: task.prompt,
@@ -431,6 +432,7 @@ async function executeTask(task: GenerationTask) {
         const id = await imageStorage.addImage(image)
         task.data = { ...image, id }
         task.status = 'success'
+        activeBatches.value = [...activeBatches.value]
     } catch (err) {
         let errorMessage = 'Generation failed'
         if (err instanceof Error) {
@@ -446,6 +448,7 @@ async function executeTask(task: GenerationTask) {
         }
         task.error = errorMessage
         task.status = 'error'
+        activeBatches.value = [...activeBatches.value]
         addToast('error', `Failed: ${errorMessage}`)
     }
 }
