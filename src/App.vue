@@ -67,6 +67,7 @@
                     v-model:aspect-ratios="params.aspectRatios"
                     v-model:resolution="params.resolution"
                     v-model:count="params.count"
+                    v-model:enable-google-search="enableGoogleSearch"
                 />
             </template>
             
@@ -205,6 +206,8 @@ const params = ref<GenerationParams>({
     count: 1
 })
 
+const enableGoogleSearch = ref(false)
+
 const isGenerating = ref(false)
 const activeTasks = ref<GenerationTask[]>([])
 const activeBatches = ref<BatchInfo[]>([])
@@ -309,12 +312,23 @@ const handleFetchModels = async () => {
         }
 
         const models = await fetchModels(activeProvider.value.endpoint, apiKey.value)
-        modelOptions.value = models.map(m => ({
-            id: m.id,
-            label: m.name?.trim() ? `${m.id} - ${m.name.trim()}` : m.id,
-            description: m.description,
-            supportsImages: m.id.toLowerCase().includes('image')
-        }))
+        const mappedModels = models.map(m => {
+            const supportsImages = m.id.toLowerCase().includes('image')
+            return {
+                id: m.id,
+                label: supportsImages 
+                    ? `🖼️ ${m.name?.trim() ? `${m.id} - ${m.name.trim()}` : m.id}`
+                    : (m.name?.trim() ? `${m.id} - ${m.name.trim()}` : m.id),
+                description: m.description,
+                supportsImages
+            }
+        })
+        // 排序：生图模型在前
+        modelOptions.value = mappedModels.sort((a, b) => {
+            if (a.supportsImages && !b.supportsImages) return -1
+            if (!a.supportsImages && b.supportsImages) return 1
+            return 0
+        })
         LocalStorage.saveModelCache(activeProvider.value.endpoint, modelOptions.value)
     } catch (err) {
         addToast('error', err instanceof Error ? err.message : '获取模型列表失败')
@@ -409,7 +423,9 @@ async function executeTask(task: GenerationTask) {
             apikey: apiKey.value,
             endpoint: activeProvider.value.endpoint,
             model: activeProvider.value.model,
-            aspectRatio: task.aspectRatio
+            aspectRatio: task.aspectRatio,
+            imageSize: task.resolution,
+            enableGoogleSearch: enableGoogleSearch.value
         })
         
         const imageUrl = result.imageUrls[0]

@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { Search } from 'lucide-vue-next'
 import type { AspectRatio, Resolution } from '../types'
 
 const props = defineProps<{
   aspectRatios: string[]
   resolution: string
   count: number
+  enableGoogleSearch: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:aspectRatios', value: string[]): void
   (e: 'update:resolution', value: string): void
   (e: 'update:count', value: number): void
+  (e: 'update:enableGoogleSearch', value: boolean): void
 }>()
 
 const availableRatios = [
@@ -33,6 +36,10 @@ const toggleRatio = (ratio: string) => {
 
 const selectResolution = (res: string) => {
   emit('update:resolution', res)
+}
+
+const toggleGoogleSearch = () => {
+  emit('update:enableGoogleSearch', !props.enableGoogleSearch)
 }
 
 const updateCount = (event: Event) => {
@@ -87,6 +94,30 @@ const getRatioStyle = (ratio: string) => {
             {{ res }}
           </button>
         </div>
+        
+        <!-- Google Search Toggle -->
+        <button
+          @click="toggleGoogleSearch"
+          class="flex items-center justify-between w-full mt-3 px-3 py-2.5 rounded-neo border transition-all"
+          :class="enableGoogleSearch
+            ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
+            : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700'"
+        >
+          <div class="flex items-center gap-2">
+            <Search class="w-4 h-4" :class="enableGoogleSearch ? 'text-blue-500 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'" />
+            <span class="text-sm font-medium" :class="enableGoogleSearch ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-600 dark:text-zinc-400'">Google 搜索</span>
+          </div>
+          <div 
+            class="w-10 h-5 rounded-full transition-all relative"
+            :class="enableGoogleSearch ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-600'"
+          >
+            <div 
+              class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"
+              :class="enableGoogleSearch ? 'left-5' : 'left-0.5'"
+            ></div>
+          </div>
+        </button>
+        <p class="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">仅 Gemini 3 Pro Image 支持</p>
       </div>
 
       <div class="flex flex-col gap-4">
