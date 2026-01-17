@@ -337,7 +337,7 @@ const handleFetchModels = async () => {
     }
 }
 
-const MAX_CONCURRENT = 3
+const MAX_CONCURRENT = 4
 
 const handleGenerate = async () => {
     if (!prompt.value.trim()) {
