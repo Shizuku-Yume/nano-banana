@@ -36,11 +36,12 @@ export const imageStorage = {
     },
 
     async getFavorites(): Promise<GeneratedImage[]> {
-        return await db.images
-            .where('isFavorite')
-            .equals(1)
-            .reverse()
-            .sortBy('timestamp')
+        // IndexedDB stores boolean as 1/0, but we also support true/false
+        // Filter in memory to handle both cases
+        const all = await db.images.toArray()
+        return all
+            .filter(img => img.isFavorite === true || (img.isFavorite as unknown) === 1)
+            .sort((a, b) => b.timestamp - a.timestamp)
     },
 
     async getByBatchId(batchId: string): Promise<GeneratedImage[]> {

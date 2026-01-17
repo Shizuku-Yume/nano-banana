@@ -12,6 +12,7 @@ const emit = defineEmits<{
   (e: 'openLightbox', images: GeneratedImage[], index: number): void
   (e: 'toggleFavorite', id: number): void
   (e: 'deleteImage', id: number): void
+  (e: 'iterate', image: GeneratedImage): void
   (e: 'loadMore'): void
 }>()
 
@@ -52,6 +53,7 @@ onUnmounted(() => {
       @click="emit('openLightbox', images, index)"
       @favorite="emit('toggleFavorite', $event)"
       @delete="emit('deleteImage', $event)"
+      @iterate="emit('iterate', $event)"
     />
     
     <template v-if="loading">

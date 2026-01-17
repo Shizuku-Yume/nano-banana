@@ -27,24 +27,26 @@
                 </div>
 
                 <div v-else-if="activeTab === 'gallery'">
-                    <GalleryGrid 
-                        :images="galleryImages"
-                        :loading="isLoadingGallery"
-                        @open-lightbox="openLightbox"
-                        @toggle-favorite="handleToggleFavorite"
-                        @delete-image="handleDeleteImage"
-                        @load-more="loadMoreGallery"
-                    />
+                <GalleryGrid 
+                    :images="galleryImages"
+                    :loading="isLoadingGallery"
+                    @open-lightbox="openLightbox"
+                    @toggle-favorite="handleToggleFavorite"
+                    @delete-image="handleDeleteImage"
+                    @iterate="handleReuse"
+                    @load-more="loadMoreGallery"
+                />
                 </div>
 
                 <div v-else-if="activeTab === 'favorites'">
-                    <GalleryGrid 
-                        :images="favoriteImages"
-                        :loading="isLoadingFavorites"
-                        @open-lightbox="openLightbox"
-                        @toggle-favorite="handleToggleFavorite"
-                        @delete-image="handleDeleteImage"
-                    />
+                <GalleryGrid 
+                    :images="favoriteImages"
+                    :loading="isLoadingFavorites"
+                    @open-lightbox="openLightbox"
+                    @toggle-favorite="handleToggleFavorite"
+                    @delete-image="handleDeleteImage"
+                    @iterate="handleReuse"
+                />
                     
                     <div v-if="favoriteImages.length === 0 && !isLoadingFavorites" class="text-center py-20">
                         <div class="text-5xl mb-4">❤️</div>
@@ -513,22 +515,30 @@ const openLightbox = (images: GeneratedImage[], index: number) => {
 }
 
 const handleDownload = async (image: GeneratedImage) => {
-    const link = document.createElement('a')
-    link.href = image.url
-    link.download = `nano-banana-${image.id}-${Date.now()}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    try {
+        const response = await fetch(image.url)
+        const blob = await response.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = `nano-banana-${image.id}-${Date.now()}.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+        addToast('error', '下载失败')
+        console.error('Download failed:', err)
+    }
 }
 
 const handleReuse = (image: GeneratedImage) => {
     prompt.value = image.prompt
-    if (image.referenceImages) {
-        referenceImages.value = [...image.referenceImages]
-    }
+    referenceImages.value = [image.url]
     selectedStyleId.value = image.styleId || null
     activeTab.value = 'create'
     lightbox.value.isOpen = false
+    addToast('success', '已添加为参考图')
 }
 
 const handleSavePreset = async (preset: Omit<StylePreset, 'id'>) => {
