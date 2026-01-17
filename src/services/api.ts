@@ -14,6 +14,48 @@ async function parseSSEResponse(response: Response): Promise<any> {
     let buffer = ''
     let fullMessage: any = null
 
+    const processLine = (line: string) => {
+        if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+            if (data === '[DONE]') return
+            if (!data) return
+
+            try {
+                const json = JSON.parse(data)
+
+                if (!fullMessage) {
+                    fullMessage = {
+                        choices: [{
+                            message: {},
+                            index: 0
+                        }]
+                    }
+                }
+
+                if (json.choices?.[0]?.delta) {
+                    const delta = json.choices[0].delta
+                    const message = fullMessage.choices[0].message
+
+                    if (delta.content !== undefined) {
+                        message.content = (message.content || '') + delta.content
+                    }
+
+                    if (delta.images) {
+                        message.images = delta.images
+                    }
+
+                    Object.keys(delta).forEach(key => {
+                        if (key !== 'content' && key !== 'images') {
+                            message[key] = delta[key]
+                        }
+                    })
+                }
+            } catch (e) {
+                console.warn('Failed to parse SSE chunk:', data.substring(0, 200), e)
+            }
+        }
+    }
+
     try {
         while (true) {
             const { done, value } = await reader.read()
@@ -24,59 +66,20 @@ async function parseSSEResponse(response: Response): Promise<any> {
             buffer = lines.pop() || ''
 
             for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const data = line.slice(6).trim()
-                    if (data === '[DONE]') continue
-                    if (!data) continue
-
-                    try {
-                        const json = JSON.parse(data)
-
-                        // Initialize fullMessage on first chunk
-                        if (!fullMessage) {
-                            fullMessage = {
-                                choices: [{
-                                    message: {},
-                                    index: 0
-                                }]
-                            }
-                        }
-
-                        // Merge delta content from streaming chunks
-                        if (json.choices?.[0]?.delta) {
-                            const delta = json.choices[0].delta
-                            const message = fullMessage.choices[0].message
-
-                            // Merge content
-                            if (delta.content !== undefined) {
-                                message.content = (message.content || '') + delta.content
-                            }
-
-                            // Merge images
-                            if (delta.images) {
-                                message.images = delta.images
-                            }
-
-                            // Merge other fields
-                            Object.keys(delta).forEach(key => {
-                                if (key !== 'content' && key !== 'images') {
-                                    message[key] = delta[key]
-                                }
-                            })
-                        }
-                    } catch (e) {
-                        console.warn('Failed to parse SSE chunk:', data, e)
-                    }
-                }
+                processLine(line)
             }
         }
     } catch (e) {
-        // Connection closed unexpectedly - if we have data, use it
         console.warn('SSE stream interrupted:', e)
-        if (!fullMessage) {
-            throw e // Re-throw if we have no data at all
-        }
-        // Otherwise continue with what we have
+    }
+
+    // Process any remaining data in buffer (important for interrupted connections)
+    if (buffer.trim()) {
+        processLine(buffer)
+    }
+
+    if (!fullMessage) {
+        throw new Error('No valid data received from stream')
     }
 
     return fullMessage
