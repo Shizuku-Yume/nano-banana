@@ -10,4 +10,47 @@
     .dark body {
         @apply bg-zinc-900 text-zinc-100;
     }
+
+    /* Scrollbar styling for light mode */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f4f4f5; /* zinc-100 */
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #a1a1aa; /* zinc-400 */
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #71717a; /* zinc-500 */
+    }
+
+    /* Scrollbar styling for dark mode */
+    .dark ::-webkit-scrollbar-track {
+        background: #27272a; /* zinc-800 */
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+        background: #52525b; /* zinc-600 */
+    }
+
+    .dark ::-webkit-scrollbar-thumb:hover {
+        background: #71717a; /* zinc-500 */
+    }
+
+    /* Firefox scrollbar */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: #a1a1aa #f4f4f5;
+    }
+
+    .dark * {
+        scrollbar-color: #52525b #27272a;
+    }
 }

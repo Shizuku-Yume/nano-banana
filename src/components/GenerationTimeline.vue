@@ -84,7 +84,7 @@ const handleBatchReuse = (batch: BatchInfo) => {
       
       <!-- Batch Header -->
       <div class="mb-6 relative">
-        <div class="hidden md:block absolute -left-[37px] top-1.5 w-4 h-4 rounded-full bg-brand border-4 border-white shadow-sm z-10 transition-transform duration-300 group-hover:scale-125"></div>
+        <div class="hidden md:block absolute -left-[37px] top-1.5 w-4 h-4 rounded-full bg-brand border-4 border-white dark:border-zinc-900 shadow-sm z-10 transition-transform duration-300 group-hover:scale-125"></div>
         
         <p class="text-zinc-800 text-base md:text-lg font-medium leading-relaxed max-w-4xl break-words">
           {{ batch.prompt }}
@@ -146,7 +146,7 @@ const handleBatchReuse = (batch: BatchInfo) => {
         <!-- Reuse Button -->
         <button 
           @click="handleBatchReuse(batch)"
-          class="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700 bg-white shadow-neo-lift hover:shadow-neo-lift-hover hover:scale-105 active:scale-95 px-4 py-2 rounded-full transition-all duration-200 min-h-[44px] md:min-h-0"
+          class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 bg-white dark:bg-zinc-800 shadow-neo-lift dark:shadow-none dark:border dark:border-zinc-700 hover:shadow-neo-lift-hover hover:scale-105 active:scale-95 px-4 py-2 rounded-full transition-all duration-200 min-h-[44px] md:min-h-0"
         >
           <RefreshCcw :size="14" />
           <span>再次使用</span>
@@ -155,7 +155,7 @@ const handleBatchReuse = (batch: BatchInfo) => {
         <!-- Regenerate Button -->
         <button 
           @click="emit('regenerate', batch.batchId)"
-          class="flex items-center gap-2 text-sm text-brand bg-brand-light hover:bg-brand-light/80 hover:scale-105 active:scale-95 px-4 py-2 rounded-full transition-all duration-200 min-h-[44px] md:min-h-0"
+          class="flex items-center gap-2 text-sm text-brand dark:text-teal-400 bg-brand-light dark:bg-teal-900/30 hover:bg-brand-light/80 dark:hover:bg-teal-900/50 hover:scale-105 active:scale-95 px-4 py-2 rounded-full transition-all duration-200 min-h-[44px] md:min-h-0"
         >
           <RotateCw :size="14" />
           <span>重新生成</span>
