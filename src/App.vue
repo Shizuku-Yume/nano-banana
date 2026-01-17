@@ -34,6 +34,7 @@
                     @toggle-favorite="handleToggleFavorite"
                     @delete-image="handleDeleteImage"
                     @iterate="handleReuse"
+                    @download="handleDownload"
                     @load-more="loadMoreGallery"
                 />
                 </div>
@@ -46,6 +47,7 @@
                     @toggle-favorite="handleToggleFavorite"
                     @delete-image="handleDeleteImage"
                     @iterate="handleReuse"
+                    @download="handleDownload"
                 />
                     
                     <div v-if="favoriteImages.length === 0 && !isLoadingFavorites" class="text-center py-20">

@@ -13,6 +13,7 @@ const emit = defineEmits<{
   (e: 'toggleFavorite', id: number): void
   (e: 'deleteImage', id: number): void
   (e: 'iterate', image: GeneratedImage): void
+  (e: 'download', image: GeneratedImage): void
   (e: 'loadMore'): void
 }>()
 
@@ -54,6 +55,7 @@ onUnmounted(() => {
       @favorite="emit('toggleFavorite', $event)"
       @delete="emit('deleteImage', $event)"
       @iterate="emit('iterate', $event)"
+      @download="emit('download', $event)"
     />
     
     <template v-if="loading">
